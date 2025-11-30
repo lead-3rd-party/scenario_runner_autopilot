@@ -724,7 +724,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         SpawnActor = carla.command.SpawnActor      # pylint: disable=invalid-name
         SetAutopilot = carla.command.SetAutopilot  # pylint: disable=invalid-name
         FutureActor = carla.command.FutureActor    # pylint: disable=invalid-name
-
+        
         CarlaDataProvider.generate_spawn_points()
 
         batch = []
