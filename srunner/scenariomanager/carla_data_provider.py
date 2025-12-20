@@ -20,7 +20,6 @@ from numpy import random
 from six import iteritems
 import carla
 from agents.navigation.global_route_planner import GlobalRoutePlanner
-from config_pdm_lite import PDMLiteConfig
 
 
 def calculate_velocity(actor):
@@ -619,11 +618,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
                     blueprint.set_attribute('color', default_color)
         else:
             if blueprint.has_attribute('color') and rolename != 'hero':
-                config = PDMLiteConfig()
-                if config.domain_randomization:
-                    color = CarlaDataProvider._rng.choice(config.vehicle_recommended_colors[blueprint.id])
-                else:
-                    color = CarlaDataProvider._rng.choice(blueprint.get_attribute('color').recommended_values)
+                color = CarlaDataProvider._rng.choice(blueprint.get_attribute('color').recommended_values)
                 blueprint.set_attribute('color', color)
 
         # Make pedestrians mortal
