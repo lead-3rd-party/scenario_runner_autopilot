@@ -22,6 +22,9 @@ import carla
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.timer import GameTime
 
+# Necessary to test whether we generate a dataset
+import os
+
 
 class Weather(object):
 
@@ -149,7 +152,9 @@ class OSCWeatherBehavior(py_trees.behaviour.Behaviour):
         if weather:
             self._weather = weather
             delattr(py_trees.blackboard.Blackboard(), "CarlaWeather")
-            CarlaDataProvider.get_world().set_weather(self._weather.carla_weather)
+            # Do not change the weather during datagen
+            if int(os.environ.get('DATAGEN', 0)) == 0:
+                CarlaDataProvider.get_world().set_weather(self._weather.carla_weather)
             py_trees.blackboard.Blackboard().set("Datetime", self._weather.datetime, overwrite=True)
 
         if self._weather and self._weather.animation:
@@ -159,7 +164,9 @@ class OSCWeatherBehavior(py_trees.behaviour.Behaviour):
             if delta_time > 1:
                 self._weather.update(delta_time)
                 self._current_time = new_time
-                CarlaDataProvider.get_world().set_weather(self._weather.carla_weather)
+                # Do not change the weather during datagen
+                if int(os.environ.get('DATAGEN', 0)) == 0:
+                    CarlaDataProvider.get_world().set_weather(self._weather.carla_weather)
 
                 py_trees.blackboard.Blackboard().set("Datetime", self._weather.datetime, overwrite=True)
 
@@ -290,8 +297,11 @@ class RouteWeatherBehavior(py_trees.behaviour.Behaviour):
             if route_veh_vec.dot(route_transform.get_forward_vector()) > 0:
                 new_index = index
 
-        if new_index > self._current_index:
-            self._world.set_weather(self._route_weathers[new_index])
+
+        # Do not change the weather during datagen
+        if int(os.environ.get('DATAGEN', 0)) == 0:
+            if new_index > self._current_index:
+                self._world.set_weather(self._route_weathers[new_index])
         self._current_index = new_index
 
         return new_status

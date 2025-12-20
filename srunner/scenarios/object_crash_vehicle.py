@@ -92,6 +92,8 @@ class StationaryObjectCrossing(BasicScenario):
         static.set_simulate_physics(True)
         self.other_actors.append(static)
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
     def _create_behavior(self):
         """
         Only behavior here is to wait
@@ -117,6 +119,9 @@ class StationaryObjectCrossing(BasicScenario):
         scenario_sequence.add_child(actor_removed)
         scenario_sequence.add_child(end_condition)
 
+        from srunner.tools.background_manager import ClearScenarioType
+        scenario_sequence.add_child(ClearScenarioType(id(self)))
+
         return root
 
     def _create_test_criteria(self):
@@ -135,6 +140,7 @@ class StationaryObjectCrossing(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -276,7 +282,6 @@ class DynamicObjectCrossing(BasicScenario):
 
             # Both actors were succesfully spawned, end
             break
-
         if self._number_of_attempts == 0:
             raise Exception("Couldn't find viable position for the adversary and blocker actors")
 
@@ -289,6 +294,8 @@ class DynamicObjectCrossing(BasicScenario):
 
         self.other_actors.append(adversary)
         self.other_actors.append(blocker)
+
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -328,6 +335,9 @@ class DynamicObjectCrossing(BasicScenario):
         sequence.add_child(ActorDestroy(self.other_actors[1], name="DestroyBlocker"))
         sequence.add_child(DriveDistance(self.ego_vehicles[0], self._ego_end_distance, name="EndCondition"))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -343,6 +353,7 @@ class DynamicObjectCrossing(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
     # TODO: Pedestrian have an issue with large maps were setting them to dormant breaks them,
@@ -493,10 +504,11 @@ class ParkingCrossingPedestrian(BasicScenario):
 
         walker.set_location(self._walker_transform.location + carla.Location(z=-200))
         walker = self._replace_walker(walker)
- 
+
         self.other_actors.append(walker)
 
         self._collision_wp = walker_wp
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -535,6 +547,9 @@ class ParkingCrossingPedestrian(BasicScenario):
         sequence.add_child(ActorDestroy(self.other_actors[0], name="DestroyBlocker"))
         sequence.add_child(DriveDistance(self.ego_vehicles[0], self._ego_end_distance, name="EndCondition"))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -550,6 +565,7 @@ class ParkingCrossingPedestrian(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
     # TODO: Pedestrian have an issue with large maps were setting them to dormant breaks them,

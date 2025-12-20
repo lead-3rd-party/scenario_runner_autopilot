@@ -60,7 +60,7 @@ class CrossingBicycleFlow(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -137,6 +137,7 @@ class CrossingBicycleFlow(BasicScenario):
         else:
             self._signalized_junction = True
             self._get_traffic_lights(tls, ego_junction_dist)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _get_traffic_lights(self, tls, ego_dist):
         """Get the traffic light of the junction, mapping their states"""
@@ -187,6 +188,9 @@ class CrossingBicycleFlow(BasicScenario):
             extend_road_exit=0
         ))
         sequence.add_child(root)
+
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
         return sequence
 
     def _create_test_criteria(self):
@@ -203,4 +207,5 @@ class CrossingBicycleFlow(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

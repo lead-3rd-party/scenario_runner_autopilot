@@ -30,7 +30,7 @@ from srunner.tools.background_manager import RemoveRoadLane, ReAddRoadLane
 class YieldToEmergencyVehicle(BasicScenario):
     """
     This class holds everything required for a scenario in which the ego has to yield its lane to emergency vehicle.
-    The background activity will be removed from the lane the emergency vehicle will pass through, 
+    The background activity will be removed from the lane the emergency vehicle will pass through,
     and will be recreated once the scenario is over.
 
     Should be on the highway which is long enough and has no junctions.
@@ -38,7 +38,7 @@ class YieldToEmergencyVehicle(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -79,7 +79,7 @@ class YieldToEmergencyVehicle(BasicScenario):
                          debug_mode,
                          criteria_enable=criteria_enable)
 
-    def _initialize_actors(self, config):
+    def _initialize_actors(self, config, add_scenario_type=True):
         """
         Custom initialization
         """
@@ -107,11 +107,24 @@ class YieldToEmergencyVehicle(BasicScenario):
 
         self.other_actors.append(actor)
 
+        # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [actor, None, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "emergency_vehicle": actor,
+                "changed_route": False,
+                "from_index": 1e9,
+                "to_index": 1e9,
+                "to_left": False,
+            })
+
     def _create_behavior(self):
         """
         Spawn the EV behind and wait for it to be close-by. After it has approached,
         give the ego a certain amount of time to yield to it.
-        
+
         Sequence:
         - RemoveRoadLane
         - ActorTransformSetter
@@ -156,6 +169,9 @@ class YieldToEmergencyVehicle(BasicScenario):
         if self.route_mode:
             sequence.add_child(ReAddRoadLane(0))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -174,4 +190,5 @@ class YieldToEmergencyVehicle(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

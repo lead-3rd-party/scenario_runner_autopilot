@@ -12,14 +12,15 @@ local buffers to avoid blocking calls to CARLA
 
 from __future__ import print_function
 
+from collections import defaultdict
 import math
 import re
 import threading
 from numpy import random
 from six import iteritems
-
 import carla
 from agents.navigation.global_route_planner import GlobalRoutePlanner
+from config_pdm_lite import PDMLiteConfig
 
 
 def calculate_velocity(actor):
@@ -30,6 +31,56 @@ def calculate_velocity(actor):
     velocity_squared += actor.get_velocity().y**2
     return math.sqrt(velocity_squared)
 
+# PDM-LiteV1.1
+def DEFAULT_MEMORY():
+    ret = defaultdict(dict)
+    ret.update({
+        # Unprotected left turn
+        "SignalizedJunctionLeftTurn": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [], "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "NonSignalizedJunctionLeftTurn": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "NonSignalizedJunctionLeftTurnEnterFlow": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "SignalizedJunctionLeftTurnEnterFlow": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "InterurbanActorFlow": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "InterurbanAdvancedActorFlow": {"adversarial_actors": [], "source_wp_1": None, "sink_wp_1": None, "source_wp_2": None, "sink_wp_2": None, "intersection_point_1": None, "intersection_point_2": None,  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route_1": None, "opponent_traffic_route_2": None}, # TODO
+        # Unprotected right turn
+        "SignalizedJunctionRightTurn": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "NonSignalizedJunctionRightTurn": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        # Pedestrians
+        "VehicleTurningRoute": {"pedestrian_moved": defaultdict(lambda: False)},
+        "VehicleTurningRoutePedestrian": {"pedestrian_moved": defaultdict(lambda: False)},
+        "DynamicObjectCrossing": {"pedestrian_moved": defaultdict(lambda: False)},
+        "ParkingCrossingPedestrian": {"pedestrian_moved": defaultdict(lambda: False)},
+        "PedestrianCrossing": {"pedestrian_moved": defaultdict(lambda: False)},
+        # Opposite vehicle taking priority
+        "OppositeVehicleRunningRedLight": {"adversarial_actors": []},
+        "OppositeVehicleTakingPriority": {"adversarial_actors": []},
+        # Obstacle scenarios with one way
+        "Accident": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None, "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [], "ignored_adversarial_actors_ids": [],  "obstacles": []},
+        "ConstructionObstacle": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None, "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "obstacles": []},
+        "ParkedObstacle": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [],  "obstacles": []},
+        "HazardAtSideLane": {"source_lane": None, "target_lane": None,"bicycle_1": None, "adversarial_actors": [],  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": []}, # TODO
+        # Obstacle scenarios with two ways
+        "AccidentTwoWays": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "obstacles": []},
+        "ConstructionObstacleTwoWays": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None,  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "obstacles": []},
+        "ParkedObstacleTwoWays": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None,  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "obstacles": []},
+        "HazardAtSideLaneTwoWays": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None,  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], }, # TODO
+        "VehicleOpensDoorTwoWays": {"obstacles": [], "vehicle_opened_door": False, "vehicle_door_side": None},
+        "InvadingTurn": {"obstacles": []}, # TODO
+        # Highway merging scenarios
+        "MergerIntoSlowTraffic": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None, "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], }, # TODO
+        "MergerIntoSlowTrafficV2": {"source_lane": None, "target_lane": None, "adversarial_actors": [], "changed_route": False, "from_index": None,  "dangerous_adversarial_actor_ids": [], "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], }, # TODO
+        # Cut in scenarios
+        "StaticCutIn": {"cut_in_vehicle": None, "stopped": False},
+        "ParkingCutIn": {"cut_in_vehicle": None, "stopped": False},
+        "HighwayCutIn": {"cut_in_vehicle": None, "stopped": False},
+        # Misc
+        "BlockedIntersection": {"obstacles": []},
+        "EnterActorFlow": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "EnterActorFlowV2": {"adversarial_actors": [], "source_wp": None, "sink_wp": None, "intersection_point": None,  "dangerous_adversarial_actor_ids": [],  "safe_adversarial_actors_ids": [],  "ignored_adversarial_actors_ids": [], "opponent_traffic_route": None},
+        "allow_new_actors": True,  # PDM-LiteV1.1
+        "next_traffic_light": None,  # PDM-LiteV1.1
+    })
+    return ret
 
 class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
@@ -47,7 +98,12 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
     In addition it provides access to the map and the transform of all traffic lights
     """
-
+    # Saves, which type of scenario is currently runninng. That's necessary since some scenarios can't be detected / distinguished.
+    # the key saves the scenario type and the value all relevant data
+    active_scenarios = []
+    previous_active_scenario = None # PDM-LiteV1.1
+    memory = DEFAULT_MEMORY() # PDM-LiteV1.1
+    previous_memory = DEFAULT_MEMORY() # PDM-LiteV1.1
     _actor_velocity_map = {}
     _actor_location_map = {}
     _actor_transform_map = {}
@@ -69,6 +125,26 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     _grp = None
     _runtime_init_flag = False
     _lock = threading.Lock()
+
+    @staticmethod
+    def current_active_scenario_type():
+        if len(CarlaDataProvider.active_scenarios) > 0:
+            return CarlaDataProvider.active_scenarios[0][0]
+        return None
+
+
+    # PDM-LiteV1.1
+    @staticmethod
+    def clean_current_active_scenario():
+        if len(CarlaDataProvider.active_scenarios) > 0:
+            CarlaDataProvider.previous_memory[CarlaDataProvider.active_scenarios[0][0]] = CarlaDataProvider.memory[CarlaDataProvider.active_scenarios[0][0]]
+            CarlaDataProvider.memory[CarlaDataProvider.active_scenarios[0][0]] = DEFAULT_MEMORY().get(CarlaDataProvider.active_scenarios[0][0], {})
+            CarlaDataProvider.previous_active_scenario = CarlaDataProvider.active_scenarios[0][0]
+            CarlaDataProvider.active_scenarios = CarlaDataProvider.active_scenarios[1:]
+            print(f"[CarlaDataProvider] Memory after cleaning {CarlaDataProvider.previous_active_scenario}: {CarlaDataProvider.memory[CarlaDataProvider.previous_active_scenario]}")
+            print(f"[CarlaDataProvider] Queue after cleaning {CarlaDataProvider.previous_active_scenario}: {CarlaDataProvider.active_scenarios}")
+        else:
+            raise ValueError("No active scenario to clean up")
 
     @staticmethod
     def register_actor(actor, transform=None):
@@ -243,6 +319,13 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         @return the random seed.
         """
         return CarlaDataProvider._rng
+    @staticmethod
+    def set_random_seed(seed):
+        """
+        @return the random seed.
+        """
+        CarlaDataProvider._rng = random.RandomState(seed)
+        CarlaDataProvider._random_seed = seed
 
     @staticmethod
     def get_global_route_planner():
@@ -536,7 +619,11 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
                     blueprint.set_attribute('color', default_color)
         else:
             if blueprint.has_attribute('color') and rolename != 'hero':
-                color = CarlaDataProvider._rng.choice(blueprint.get_attribute('color').recommended_values)
+                config = PDMLiteConfig()
+                if config.domain_randomization:
+                    color = CarlaDataProvider._rng.choice(config.vehicle_recommended_colors[blueprint.id])
+                else:
+                    color = CarlaDataProvider._rng.choice(blueprint.get_attribute('color').recommended_values)
                 blueprint.set_attribute('color', color)
 
         # Make pedestrians mortal
@@ -588,6 +675,8 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         """
         This method tries to create a new actor, returning it if successful (None otherwise).
         """
+        if CarlaDataProvider.memory["allow_new_actors"] is False:
+            return None
         blueprint = CarlaDataProvider.create_blueprint(model, rolename, color, actor_category, attribute_filter)
 
         if random_location:
@@ -641,6 +730,8 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         param:
         - actor_list: list of ActorConfigurationData
         """
+        if CarlaDataProvider.memory["allow_new_actors"] is False:
+            return []
 
         SpawnActor = carla.command.SpawnActor                      # pylint: disable=invalid-name
         PhysicsCommand = carla.command.SetSimulatePhysics          # pylint: disable=invalid-name
@@ -720,11 +811,13 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         Some parameters are the same for all actors (rolename, autopilot and random location)
         while others are randomized (color)
         """
+        if CarlaDataProvider.memory["allow_new_actors"] is False:
+            return []
 
         SpawnActor = carla.command.SpawnActor      # pylint: disable=invalid-name
         SetAutopilot = carla.command.SetAutopilot  # pylint: disable=invalid-name
         FutureActor = carla.command.FutureActor    # pylint: disable=invalid-name
-        
+
         CarlaDataProvider.generate_spawn_points()
 
         batch = []
@@ -752,11 +845,11 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
                     SetAutopilot(FutureActor, autopilot, CarlaDataProvider._traffic_manager_port)))
 
         actors = CarlaDataProvider.handle_actor_batch(batch, tick)
-        for actor, command in zip(actors, batch):
+        for actor in actors:
             if actor is None:
                 continue
             CarlaDataProvider._carla_actor_pool[actor.id] = actor
-            CarlaDataProvider.register_actor(actor, command.transform)
+            CarlaDataProvider.register_actor(actor, spawn_point)
 
         return actors
 

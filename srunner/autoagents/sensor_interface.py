@@ -46,9 +46,6 @@ class CallBack(object):
         self._data_provider.register_sensor(tag, sensor)
 
     def __call__(self, data):
-        """
-        call function
-        """
         if isinstance(data, carla.Image):
             self._parse_image_cb(data, self._tag)
         elif isinstance(data, carla.LidarMeasurement):
@@ -59,8 +56,22 @@ class CallBack(object):
             self._parse_gnss_cb(data, self._tag)
         elif isinstance(data, carla.IMUMeasurement):
             self._parse_imu_cb(data, self._tag)
+        elif isinstance(data, carla.libcarla.SemanticLidarMeasurement ):
+            self._parse_semantic_lidar_cb(data, self._tag)
         else:
             logging.error('No callback method for this sensor.')
+
+    def _parse_semantic_lidar_cb(self, semantic_lidar_data, tag):
+        data = np.frombuffer(semantic_lidar_data.raw_data, dtype=np.dtype([
+            ('x', 'f4'),
+            ('y', 'f4'),
+            ('z', 'f4'),
+            ('cos_inc_angle', 'f4'),
+            ('object_idx', 'u4'),
+            ('semantic_tag', 'u4')
+        ]))
+        data = copy.deepcopy(data)
+        self._data_provider.update_sensor(tag, data, semantic_lidar_data.frame)
 
     # Parsing CARLA physical Sensors
     def _parse_image_cb(self, image, tag):

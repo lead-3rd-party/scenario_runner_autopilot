@@ -2096,10 +2096,10 @@ class AdaptiveConstantVelocityAgentBehavior(AtomicBehavior):
     Important parameters:
     - actor: CARLA actor to execute the behavior.
     - reference_actor: Reference CARLA actor to get target speed.
-    - speed_increment: Float value (m/s). 
+    - speed_increment: Float value (m/s).
                        How much the actor will be faster then the reference_actor.
     - target_location: Is the desired target location (carla.location),
-                       the actor should move to. 
+                       the actor should move to.
                        If it's None, the actor will follow the lane and never stop.
     - plan: List of [carla.Waypoint, RoadOption] to pass to the controller.
     The behavior terminates after reaching the target_location (within 2 meters)
@@ -2610,12 +2610,13 @@ class ActorDestroy(AtomicBehavior):
     The behavior terminates after removing the actor
     """
 
-    def __init__(self, actor, name="ActorDestroy"):
+    def __init__(self, actor, name="ActorDestroy", callback=None):
         """
         Setup actor
         """
         super(ActorDestroy, self).__init__(name, actor)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
+        self.callback = callback
 
     def update(self):
         new_status = py_trees.common.Status.RUNNING
@@ -2623,7 +2624,8 @@ class ActorDestroy(AtomicBehavior):
             CarlaDataProvider.remove_actor_by_id(self._actor.id)
             self._actor = None
             new_status = py_trees.common.Status.SUCCESS
-
+            if self.callback:
+                self.callback()
         return new_status
 
 
@@ -2859,11 +2861,12 @@ class ActorFlow(AtomicBehavior):
     """
 
     def __init__(self, source_wp, sink_wp, spawn_dist_interval, sink_dist=2,
-                 actor_speed=20 / 3.6, initial_actors=False, initial_junction=False, name="ActorFlow"):
+                 actor_speed=20 / 3.6, initial_actors=False, initial_junction=False, name="ActorFlow", parent_scenario_type: str = None):
         """
         Setup class members
         """
         super().__init__(name)
+        self.parent_scenario_type = parent_scenario_type
         self._rng = CarlaDataProvider.get_random_seed()
         self._world = CarlaDataProvider.get_world()
         self._tm = CarlaDataProvider.get_client().get_trafficmanager(CarlaDataProvider.get_traffic_manager_port())
@@ -2937,6 +2940,9 @@ class ActorFlow(AtomicBehavior):
         self._tm.ignore_signs_percentage(actor, 100)
         self._collision_sensor_list.append(sensor)
         self._actor_list.append(actor)
+
+        if self.parent_scenario_type is not None:
+            CarlaDataProvider.memory[self.parent_scenario_type]["adversarial_actors"] = self._actor_list
 
     def update(self):
         """Controls the created actors and creaes / removes other when needed"""
@@ -3426,19 +3432,22 @@ class OpenVehicleDoor(AtomicBehavior):
     - duration: Duration of the open door
     """
 
-    def __init__(self, actor, vehicle_door, name="OpenVehicleDoor"):
+    def __init__(self, actor, vehicle_door, name="OpenVehicleDoor", callback=None):
         """
         Setup class members
         """
         super(OpenVehicleDoor, self).__init__(name, actor)
         self._vehicle_door = vehicle_door
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
+        self.callback = callback
 
     def initialise(self):
         """
         Set start time
         """
         self._actor.open_door(self._vehicle_door)
+        if self.callback is not None:
+            self.callback()
         super().initialise()
 
     def update(self):
@@ -4099,7 +4108,7 @@ class WalkerFlow(AtomicBehavior):
     - sink_locations_prob (list(float)): The probability of each sink_location
     - spawn_dist_interval (list(float)): Distance between spawned actors
     - random_seed : Optional. The seed of numpy's random
-    - sink_distance: Actors closer to the sink than this distance will be deleted. 
+    - sink_distance: Actors closer to the sink than this distance will be deleted.
                      Probably due to the navigation module rerouting the walkers, a sink distance of 2 is reasonable.
     """
     def __init__(self, source_location, sink_locations, sink_locations_prob, spawn_dist_interval, random_seed=None, sink_dist=2,

@@ -6,7 +6,7 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
 """
-Scenario in which the ego is about to turn right 
+Scenario in which the ego is about to turn right
 when a vehicle coming from the opposite lane invades the ego's lane, forcing the ego to move right to avoid a possible collision.
 """
 
@@ -47,15 +47,15 @@ def get_value_parameter(config, name, p_type, default):
 
 class InvadingTurn(BasicScenario):
     """
-    This class holds everything required for a scenario in which the ego is about to turn right 
-    when a vehicle coming from the opposite lane invades the ego's lane, 
+    This class holds everything required for a scenario in which the ego is about to turn right
+    when a vehicle coming from the opposite lane invades the ego's lane,
     forcing the ego to move right to avoid a possible collision.
 
     This scenario is expected to take place on a road that has only one lane in each direction.
     """
 
     def __init__(self, world, ego_vehicles, config, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -108,6 +108,19 @@ class InvadingTurn(BasicScenario):
         self._true_offset *= -1 # Cause left direction
 
         self._create_obstacle()
+
+        # add actors, that are relevant for the Expert to the list active_scenarios
+        first_cone = self.other_actors[-1]
+        last_cone = self.other_actors[0]
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [first_cone, last_cone, self._true_offset], id(self))) # added
+        CarlaDataProvider.memory[
+            type(self).__name__
+        ].update({
+            "obstacles": self.other_actors,
+            "first_cone": first_cone,
+            "last_cone": last_cone,
+            "offset": self._true_offset
+        })
 
     def _create_obstacle(self):
 
@@ -163,6 +176,9 @@ class InvadingTurn(BasicScenario):
         for actor in self.other_actors:
             sequence.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -179,4 +195,5 @@ class InvadingTurn(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

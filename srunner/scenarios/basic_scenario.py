@@ -53,14 +53,14 @@ class BasicScenario(object):
 
         # If no timeout was provided, set it to 60 seconds
         if not hasattr(self, 'timeout'):
-            self.timeout = 60 
+            self.timeout = 60
         if debug_mode:
             py_trees.logging.level = py_trees.logging.Level.DEBUG
 
         if not self.route_mode:
             # Only init env for route mode, avoid duplicate initialization during runtime
             self._initialize_environment(world)
-            
+
         self._initialize_actors(config)
 
         if CarlaDataProvider.is_runtime_init_mode():
@@ -334,3 +334,10 @@ class BasicScenario(object):
         Returns occupied parking slots.
         """
         return self.parking_slots
+
+    def __del__(self):
+        if len(CarlaDataProvider.active_scenarios) > 0:
+            _, _, scenario_instance_id = CarlaDataProvider.active_scenarios[0]
+            if scenario_instance_id == id(self):
+                print("Popping active scenario: {} automatically after ending.".format(self.name))
+                CarlaDataProvider.clean_current_active_scenario()

@@ -82,6 +82,8 @@ class ChangeLane(BasicScenario):
             self._fast_vehicle_velocity = random.randint(100, 201)
             self._slow_vehicle_velocity = random.randint(1, 6)
 
+        raise NotImplementedError("ChangeLane scenario is not implemented yet.")
+
     def _initialize_actors(self, config):
 
         # add actors from xml file
@@ -107,6 +109,8 @@ class ChangeLane(BasicScenario):
                            slow_car_waypoint.transform.location.y,
                            slow_car_waypoint.transform.location.z),
             slow_car_waypoint.transform.rotation)
+
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
 
@@ -178,4 +182,5 @@ class ChangeLane(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

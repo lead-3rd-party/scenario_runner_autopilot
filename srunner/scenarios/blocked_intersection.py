@@ -48,7 +48,7 @@ class BlockedIntersection(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -100,6 +100,9 @@ class BlockedIntersection(BasicScenario):
         lights |= carla.VehicleLightState.Brake
         blocker.set_light_state(carla.VehicleLightState(lights))
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[type(self).__name__]["obstacles"] = [blocker]
+
     def _create_behavior(self):
         """
         Just wait for a while after the ego closes in on the blocker, then remove it.
@@ -131,6 +134,9 @@ class BlockedIntersection(BasicScenario):
         sequence.add_child(main_behavior)
         sequence.add_child(ActorDestroy(self.other_actors[0]))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -147,4 +153,5 @@ class BlockedIntersection(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

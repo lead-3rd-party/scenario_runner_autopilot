@@ -115,6 +115,8 @@ class ManeuverOppositeDirection(BasicScenario):
         self._second_actor_transform = second_actor_waypoint.transform
         self._third_actor_transform = second_prop_transform
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
     def _create_behavior(self):
         """
         The behavior tree returned by this method is as follows:
@@ -151,6 +153,9 @@ class ManeuverOppositeDirection(BasicScenario):
         scenario_sequence.add_child(ActorDestroy(self.other_actors[1]))
         scenario_sequence.add_child(ActorDestroy(self.other_actors[2]))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        scenario_sequence.add_child(ClearScenarioType(id(self)))
+
         return scenario_sequence
 
     def _create_test_criteria(self):
@@ -169,4 +174,5 @@ class ManeuverOppositeDirection(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

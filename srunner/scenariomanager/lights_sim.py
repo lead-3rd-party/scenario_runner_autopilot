@@ -116,9 +116,9 @@ class RouteLightsBehavior(py_trees.behaviour.Behaviour):
         for vehicle in scenario_vehicles:
             try:
                 if vehicle.get_location().distance(location) > radius:
-                        lights = vehicle.get_light_state()
-                        lights &= ~self._vehicle_lights  # Remove those lights
-                        vehicle.set_light_state(carla.VehicleLightState(lights))
+                    lights = vehicle.get_light_state()
+                    lights &= ~self._vehicle_lights  # Remove those lights
+                    vehicle.set_light_state(carla.VehicleLightState(lights))
                 else:
                     lights = vehicle.get_light_state()
                     lights |= self._vehicle_lights  # Add those lights

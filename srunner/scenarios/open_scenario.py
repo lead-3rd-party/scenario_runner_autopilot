@@ -504,4 +504,5 @@ class OpenScenario(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

@@ -47,7 +47,7 @@ class ParkingCutIn(BasicScenario):
         self._end_distance = 30
         self._extra_space = 20
 
-        self._bp_attributes = {'base_type': 'car', 'generation': 2, 'special_type': ''}
+        self._bp_attributes = {'base_type': 'car', 'special_type': '', 'generation': 2}
 
         self.timeout = timeout
 
@@ -112,6 +112,11 @@ class ParkingCutIn(BasicScenario):
         side_location = self._get_displaced_location(self._parked_actor, parking_wp)
         self._parked_actor.set_location(side_location)
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[
+            type(self).__name__
+        ]["cut_in_vehicle"] = self.other_actors[1]  # added
+
     def _get_displaced_location(self, actor, wp):
         """
         Calculates the location such that the actor is at the sidemost part of the lane
@@ -165,6 +170,9 @@ class ParkingCutIn(BasicScenario):
         if self.route_mode:
             sequence.add_child(ChangeRoadBehavior(extra_space=0))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -180,4 +188,5 @@ class ParkingCutIn(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

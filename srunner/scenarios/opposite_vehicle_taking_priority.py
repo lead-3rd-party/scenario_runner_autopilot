@@ -43,7 +43,7 @@ class OppositeVehicleJunction(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -51,7 +51,7 @@ class OppositeVehicleJunction(BasicScenario):
         self._world = world
         self._map = CarlaDataProvider.get_map()
         self._source_dist = 30
-        self._sink_dist = 10
+        self._sink_dist = 30
         self._adversary_speed = 60 / 3.6 # m/s
 
         if 'direction' in config.other_parameters:
@@ -152,6 +152,8 @@ class OppositeVehicleJunction(BasicScenario):
         collision_wp = self._map.get_waypoint(self._collision_location)
         self._collision_location.z = collision_wp.transform.location.z
 
+        self.opposite_actor = opposite_actor
+
     def _create_behavior(self):
         raise NotImplementedError("Found missing behavior")
 
@@ -168,6 +170,7 @@ class OppositeVehicleJunction(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -177,7 +180,7 @@ class OppositeVehicleRunningRedLight(OppositeVehicleJunction):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -198,6 +201,8 @@ class OppositeVehicleRunningRedLight(OppositeVehicleJunction):
                 self._tl_dict[tl] = carla.TrafficLightState.Green
             else:
                 self._tl_dict[tl] = carla.TrafficLightState.Red
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [self.opposite_actor, None, self._direction, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[type(self).__name__]["adversarial_actors"].append(self.opposite_actor)
 
     def _create_behavior(self):
         """
@@ -250,6 +255,9 @@ class OppositeVehicleRunningRedLight(OppositeVehicleJunction):
         root.add_child(ActorTransformSetter(self.other_actors[0], self._spawn_location))
         root.add_child(tls_behavior)
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
 
 
@@ -259,7 +267,7 @@ class OppositeVehicleTakingPriority(OppositeVehicleJunction):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -314,4 +322,16 @@ class OppositeVehicleTakingPriority(OppositeVehicleJunction):
         root.add_child(ActorDestroy(self.other_actors[0]))
         root.add_child(WaitEndIntersection(self.ego_vehicles[0]))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
+
+    def _initialize_actors(self, config):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [self.opposite_actor, None, self._direction, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[type(self).__name__]["adversarial_actors"].append(self.opposite_actor)

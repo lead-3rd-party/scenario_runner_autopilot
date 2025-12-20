@@ -93,6 +93,7 @@ class FollowLeadingVehicle(BasicScenario):
         transform.location.z += 0.5
         first_vehicle = CarlaDataProvider.request_new_actor('vehicle.nissan.patrol', transform)
         self.other_actors.append(first_vehicle)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -134,6 +135,9 @@ class FollowLeadingVehicle(BasicScenario):
         sequence.add_child(endcondition)
         sequence.add_child(ActorDestroy(self.other_actors[0]))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -153,6 +157,7 @@ class FollowLeadingVehicle(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -231,6 +236,8 @@ class FollowLeadingVehicleWithObstacle(BasicScenario):
         self.other_actors.append(first_actor)
         self.other_actors.append(second_actor)
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
     def _create_behavior(self):
         """
         The scenario defined after is a "follow leading vehicle" scenario. After
@@ -287,6 +294,9 @@ class FollowLeadingVehicleWithObstacle(BasicScenario):
         sequence.add_child(ActorDestroy(self.other_actors[0]))
         sequence.add_child(ActorDestroy(self.other_actors[1]))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -306,4 +316,5 @@ class FollowLeadingVehicleWithObstacle(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

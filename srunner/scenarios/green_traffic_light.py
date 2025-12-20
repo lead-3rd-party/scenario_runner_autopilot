@@ -64,6 +64,8 @@ class PriorityAtJunction(BasicScenario):
 
         self._get_traffic_lights(self._junction, ego_junction_dist)
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
     def _get_traffic_lights(self, junction, junction_dist):
         """Get the traffic light of the junction, mapping their states"""
         tls = self._world.get_traffic_lights_in_junction(junction.id)
@@ -82,7 +84,12 @@ class PriorityAtJunction(BasicScenario):
         root = py_trees.composites.Parallel(policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         root.add_child(WaitEndIntersection(self.ego_vehicles[0], self._junction.id))
         root.add_child(TrafficLightFreezer(self._tl_dict))
-        return root
+
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence = py_trees.composites.Sequence("Clear Scenario")
+        sequence.add_child(root)
+        sequence.add_child(ClearScenarioType(id(self)))
+        return sequence
 
     def _create_test_criteria(self):
         """
@@ -95,4 +102,5 @@ class PriorityAtJunction(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

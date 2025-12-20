@@ -74,6 +74,8 @@ class NoSignalJunctionCrossing(BasicScenario):
         first_vehicle.set_simulate_physics(enabled=False)
         self.other_actors.append(first_vehicle)
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
     def _create_behavior(self):
         """
         After invoking this scenario, it will wait for the user
@@ -143,6 +145,9 @@ class NoSignalJunctionCrossing(BasicScenario):
         keep_velocity_other_parallel.add_child(keep_velocity_other)
         keep_velocity_other_parallel.add_child(stop_other_trigger)
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
 
     def _create_test_criteria(self):
@@ -161,6 +166,7 @@ class NoSignalJunctionCrossing(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -173,7 +179,7 @@ class NoSignalJunctionCrossingRoute(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -196,6 +202,9 @@ class NoSignalJunctionCrossingRoute(BasicScenario):
         sequence = py_trees.composites.Sequence("UnSignalizedJunctionCrossingRoute")
         sequence.add_child(WaitEndIntersection(self.ego_vehicles[0]))
         sequence.add_child(DriveDistance(self.ego_vehicles[0], self._end_distance))
+
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
         return sequence
 
     def _create_test_criteria(self):
@@ -209,4 +218,5 @@ class NoSignalJunctionCrossingRoute(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

@@ -46,7 +46,7 @@ class HighwayCutIn(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -88,6 +88,11 @@ class HighwayCutIn(BasicScenario):
         self._cut_in_vehicle.set_location(self._other_transform.location - carla.Location(z=100))
         self._cut_in_vehicle.set_simulate_physics(False)
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[
+            type(self).__name__
+        ]["cut_in_vehicle"] = self._cut_in_vehicle
+
 
     def _create_behavior(self):
         """
@@ -125,6 +130,9 @@ class HighwayCutIn(BasicScenario):
             self._same_lane_time, self._other_lane_time, self._change_time, name="Cut_in")
         )
         behavior.add_child(ActorDestroy(self._cut_in_vehicle))
+
+        from srunner.tools.background_manager import ClearScenarioType
+        behavior.add_child(ClearScenarioType(id(self)))
         return behavior
 
     def _create_test_criteria(self):
@@ -140,4 +148,5 @@ class HighwayCutIn(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

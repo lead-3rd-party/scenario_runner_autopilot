@@ -88,6 +88,9 @@ class OtherLeadingVehicle(BasicScenario):
         self._first_actor_transform = first_vehicle_transform
         self._second_actor_transform = second_vehicle_transform
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
+
     def _create_behavior(self):
         """
         The scenario defined after is a "other leading vehicle" scenario. After
@@ -133,6 +136,9 @@ class OtherLeadingVehicle(BasicScenario):
         sequence.add_child(ActorDestroy(self.other_actors[0]))
         sequence.add_child(ActorDestroy(self.other_actors[1]))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -148,4 +154,5 @@ class OtherLeadingVehicle(BasicScenario):
         return criteria
 
     def __del__(self):
+        super().__del__()
         self.remove_all_actors()

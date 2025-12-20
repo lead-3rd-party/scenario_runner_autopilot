@@ -26,7 +26,7 @@ from srunner.tools.scenario_helper import (generate_target_waypoint,
                                            get_same_dir_lanes,
                                            get_closest_traffic_light)
 
-from srunner.tools.background_manager import HandleJunctionScenario
+from srunner.tools.background_manager import AllowActorGeneration, DisallowActorGeneration, HandleJunctionScenario
 
 
 def get_value_parameter(config, name, p_type, default):
@@ -66,7 +66,7 @@ class JunctionRightTurn(BasicScenario):
         self._flow_tl_dict = {}
         self._init_tl_dict = {}
 
-        self._end_distance = 10  # Distance after the junction before the scenario ends
+        self._end_distance = 50  # Distance after the junction before the scenario ends
 
         self._flow_speed = get_value_parameter(config, 'flow_speed', float, 20)
         self._source_dist_interval = get_interval_parameter(config, 'source_dist_interval', float, [25, 50])
@@ -154,6 +154,7 @@ class JunctionRightTurn(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -166,7 +167,7 @@ class SignalizedJunctionRightTurn(JunctionRightTurn):
                  timeout=80):
         super().__init__(world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout)
 
-    def _initialize_actors(self, config):
+    def _initialize_actors(self, config, add_scenario_type=True):
         """
         Custom initialization
         """
@@ -187,6 +188,15 @@ class SignalizedJunctionRightTurn(JunctionRightTurn):
                 self._flow_tl_dict[tl] = carla.TrafficLightState.Red
                 self._init_tl_dict[tl] = carla.TrafficLightState.Red
 
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "source_wp": self._source_wp,
+                "sink_wp": self._sink_wp,
+            })
+
     def _create_behavior(self):
         """
         Hero vehicle is turning right in an urban area, at a signalized intersection,
@@ -206,11 +216,13 @@ class SignalizedJunctionRightTurn(JunctionRightTurn):
 
         root = py_trees.composites.Parallel(policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         end_condition = py_trees.composites.Sequence()
-        end_condition.add_child(WaitEndIntersection(self.ego_vehicles[0]))
+        end_condition.add_child(WaitEndIntersection(self.ego_vehicles[0], debug=True))
+        end_condition.add_child(DisallowActorGeneration())
         end_condition.add_child(DriveDistance(self.ego_vehicles[0], self._end_distance))
+        end_condition.add_child(AllowActorGeneration())
         root.add_child(end_condition)
         root.add_child(ActorFlow(
-            self._source_wp, self._sink_wp, self._source_dist_interval, 2, self._flow_speed, initial_actors=True))
+            self._source_wp, self._sink_wp, self._source_dist_interval, 2, self._flow_speed, initial_actors=True, parent_scenario_type= type(self).__name__,))
         root.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
 
         tl_freezer_sequence = py_trees.composites.Sequence("Traffic Light Behavior")
@@ -219,6 +231,8 @@ class SignalizedJunctionRightTurn(JunctionRightTurn):
         root.add_child(tl_freezer_sequence)
 
         sequence.add_child(root)
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
         return sequence
 
 
@@ -230,6 +244,21 @@ class NonSignalizedJunctionRightTurn(JunctionRightTurn):
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
                  timeout=80):
         super().__init__(world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout)
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "source_wp": self._source_wp,
+                "sink_wp": self._sink_wp,
+            })
 
     def _create_behavior(self):
         """
@@ -250,11 +279,15 @@ class NonSignalizedJunctionRightTurn(JunctionRightTurn):
         root = py_trees.composites.Parallel(policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         end_condition = py_trees.composites.Sequence()
         end_condition.add_child(WaitEndIntersection(self.ego_vehicles[0]))
+        end_condition.add_child(DisallowActorGeneration())
         end_condition.add_child(DriveDistance(self.ego_vehicles[0], self._end_distance))
+        end_condition.add_child(AllowActorGeneration())
         root.add_child(end_condition)
         root.add_child(ActorFlow(
-            self._source_wp, self._sink_wp, self._source_dist_interval, 2, self._flow_speed, initial_actors=True))
+            self._source_wp, self._sink_wp, self._source_dist_interval, 2, self._flow_speed, initial_actors=True, parent_scenario_type= type(self).__name__,))
         root.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
 
         sequence.add_child(root)
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
         return sequence

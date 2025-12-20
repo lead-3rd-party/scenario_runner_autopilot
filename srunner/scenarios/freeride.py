@@ -11,6 +11,7 @@ Simple freeride scenario. No action, no triggers. Ego vehicle can simply cruise 
 
 import py_trees
 
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.scenarioatomics.atomic_behaviors import Idle
 from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest
 from srunner.scenarios.basic_scenario import BasicScenario
@@ -36,6 +37,15 @@ class FreeRide(BasicScenario):
                                        debug_mode,
                                        criteria_enable=criteria_enable)
 
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
     def _setup_scenario_trigger(self, config):
         """
         """
@@ -46,6 +56,9 @@ class FreeRide(BasicScenario):
         """
         sequence = py_trees.composites.Sequence("Sequence Behavior")
         sequence.add_child(Idle())
+
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
         return sequence
 
     def _create_test_criteria(self):
@@ -65,4 +78,5 @@ class FreeRide(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

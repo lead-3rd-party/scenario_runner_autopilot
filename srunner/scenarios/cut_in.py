@@ -39,7 +39,7 @@ class CutIn(BasicScenario):
     timeout = 1200
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=600):
+                 timeout=90):
 
         self.timeout = timeout
         self._map = CarlaDataProvider.get_map()
@@ -87,6 +87,8 @@ class CutIn(BasicScenario):
                            other_actor_transform.location.y,
                            other_actor_transform.location.z + 105),
             other_actor_transform.rotation)
+
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -137,6 +139,9 @@ class CutIn(BasicScenario):
         root = py_trees.composites.Sequence("Behavior", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         root.add_child(behaviour)
         root.add_child(endcondition)
+
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
         return root
 
     def _create_test_criteria(self):
@@ -155,4 +160,5 @@ class CutIn(BasicScenario):
         """
         Remove all actors after deletion.
         """
+        super().__del__()
         self.remove_all_actors()

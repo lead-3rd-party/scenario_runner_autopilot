@@ -32,7 +32,6 @@ from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (D
 from srunner.scenarios.basic_scenario import BasicScenario
 from srunner.tools.background_manager import LeaveSpaceInFront, SetMaxSpeed, ChangeOppositeBehavior, ChangeRoadBehavior
 
-
 def get_value_parameter(config, name, p_type, default):
     if name in config.other_parameters:
         return p_type(config.other_parameters[name]['value'])
@@ -57,7 +56,7 @@ class Accident(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -65,7 +64,7 @@ class Accident(BasicScenario):
         self._world = world
         self._map = CarlaDataProvider.get_map()
         self.timeout = timeout
-        
+
         self._first_distance = 10
         self._second_distance = 6
 
@@ -146,7 +145,7 @@ class Accident(BasicScenario):
 
         return actor
 
-    def _initialize_actors(self, config):
+    def _initialize_actors(self, config, add_scenario_type=True):
         """
         Custom initialization
         """
@@ -185,6 +184,22 @@ class Accident(BasicScenario):
         second_actor.apply_control(carla.VehicleControl(hand_brake=True))
         self.other_actors.append(second_actor)
 
+        self.police_car = police_car
+        self.first_actor = first_actor
+        self.second_actor = second_actor
+        self._direction = self._direction
+
+        # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [police_car, second_actor, self._direction, False, 1e9, 1e9, False], id(self)))
+            CarlaDataProvider.memory[
+                type(self).__name__].update({
+                        "first_actor": police_car,
+                        "last_actor": second_actor,
+                        "direction": self._direction,
+                        "obstacles": [police_car, first_actor, second_actor],
+                    })
+
     def _create_behavior(self):
         """
         The vehicle has to drive the reach a specific point but an accident is in the middle of the road,
@@ -215,6 +230,9 @@ class Accident(BasicScenario):
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
 
     def _create_test_criteria(self):
@@ -231,6 +249,7 @@ class Accident(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -238,7 +257,7 @@ class AccidentTwoWays(Accident):
     """
     Variation of the Accident scenario but the ego now has to invade the opposite lane
     """
-    def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True, timeout=180):
+    def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True, timeout=90):
 
         self._opposite_interval = get_interval_parameter(config, 'frequency', float, [20, 100])
         super().__init__(world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout)
@@ -279,7 +298,35 @@ class AccidentTwoWays(Accident):
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Custom initialization
+        """
+        super()._initialize_actors(config, add_scenario_type=False)
+
+        # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [self.police_car, self.second_actor, self._direction, False, 1e9, 1e9, False], id(self)))
+            CarlaDataProvider.memory[
+                type(self).__name__]["obstacles"] = [
+                    self.police_car, self.first_actor, self.second_actor
+            ]
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "first_actor": self.police_car,
+                "last_actor": self.second_actor,
+                "direction": self._direction,
+                "changed_route": False,
+                "from_index": 1e9,
+                "to_index": 1e9,
+                "path_clear": False
+            })
 
 class ParkedObstacle(BasicScenario):
     """
@@ -288,7 +335,7 @@ class ParkedObstacle(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -370,7 +417,7 @@ class ParkedObstacle(BasicScenario):
 
         return actor
 
-    def _initialize_actors(self, config):
+    def _initialize_actors(self, config, add_scenario_type=True):
         """
         Custom initialization
         """
@@ -390,6 +437,25 @@ class ParkedObstacle(BasicScenario):
         self.other_actors.append(parked_actor)
 
         self._end_wp = self._move_waypoint_forward(self._vehicle_wp, self._end_distance)
+
+        # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
+        side_lane_wp = self._vehicle_wp.get_left_lane() if self._direction == 'right' else self._vehicle_wp.get_right_lane()
+
+        self.parked_actor = parked_actor
+
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [parked_actor, None, self._direction, False, 1e9, 1e9, False], id(self)))
+            CarlaDataProvider.memory[
+                type(self).__name__]["obstacles"] = [
+                    parked_actor
+            ]
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "first_actor": parked_actor,
+                "last_actor": None,
+                "direction": self._direction,
+            })
 
     def _create_behavior(self):
         """
@@ -420,6 +486,9 @@ class ParkedObstacle(BasicScenario):
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
 
     def _create_test_criteria(self):
@@ -436,6 +505,7 @@ class ParkedObstacle(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -443,7 +513,7 @@ class ParkedObstacleTwoWays(ParkedObstacle):
     """
     Variation of the ParkedObstacle scenario but the ego now has to invade the opposite lane
     """
-    def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True, timeout=180):
+    def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True, timeout=90):
 
         self._opposite_interval = get_interval_parameter(config, 'frequency', float, [20, 100])
         super().__init__(world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout)
@@ -484,7 +554,33 @@ class ParkedObstacleTwoWays(ParkedObstacle):
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Custom initialization
+        """
+        super()._initialize_actors(config, add_scenario_type=False)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [self.parked_actor, None, self._direction, False, 1e9, 1e9, False], id(self)))
+            CarlaDataProvider.memory[
+                type(self).__name__]["obstacles"] = [
+                    self.parked_actor
+            ]
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "first_actor": self.parked_actor,
+                "last_actor": None,
+                "direction": self._direction,
+                "changed_route": False,
+                "from_index": 1e9,
+                "to_index": 1e9,
+                "path_clear": False
+            })
 
 
 class HazardAtSideLane(BasicScenario):
@@ -494,7 +590,7 @@ class HazardAtSideLane(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -555,7 +651,7 @@ class HazardAtSideLane(BasicScenario):
 
         return actor
 
-    def _initialize_actors(self, config):
+    def _initialize_actors(self, config, add_scenario_type: bool = True):
         """
         Custom initialization
         """
@@ -587,6 +683,23 @@ class HazardAtSideLane(BasicScenario):
         # Set its initial conditions
         bicycle_2.apply_control(carla.VehicleControl(hand_brake=True))
         self.other_actors.append(bicycle_2)
+
+        self.bicycle_1 = bicycle_1
+        self.bicycle_2 = bicycle_2
+
+        # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [bicycle_1, bicycle_2, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[type(self).__name__]["bicycle_1"] = self.bicycle_1
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "first_actor": bicycle_1,
+                "last_actor": bicycle_2,
+                "changed_first_part_of_route": False,
+                "from_index": 1e9,
+                "to_index": 1e9,
+            })
 
     def _create_behavior(self):
         """
@@ -636,6 +749,9 @@ class HazardAtSideLane(BasicScenario):
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
 
     def _create_test_criteria(self):
@@ -652,6 +768,7 @@ class HazardAtSideLane(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -659,11 +776,29 @@ class HazardAtSideLaneTwoWays(HazardAtSideLane):
     """
     Variation of the HazardAtSideLane scenario but the ego now has to invade the opposite lane
     """
-    def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True, timeout=180):
+    def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True, timeout=90):
 
         self._opposite_frequency = get_value_parameter(config, 'frequency', float, 100)
 
         super().__init__(world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout)
+
+    def _initialize_actors(self, config):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config, add_scenario_type=False)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [self.bicycle_1, self.bicycle_2, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[
+            type(self).__name__
+        ].update({
+            "first_actor": self.bicycle_1,
+            "last_actor": self.bicycle_2,
+            "changed_route": False,
+            "from_index": 1e9,
+            "to_index": 1e9,
+            "path_clear": False
+        })
 
     def _create_behavior(self):
         """
@@ -715,5 +850,8 @@ class HazardAtSideLaneTwoWays(HazardAtSideLane):
 
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
+
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
 
         return root

@@ -56,7 +56,7 @@ class VehicleOpensDoorTwoWays(BasicScenario):
     opens the door, forcing the ego to lane change, invading the opposite lane
     """
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -110,7 +110,7 @@ class VehicleOpensDoorTwoWays(BasicScenario):
             dist += 1
         return next_wp
 
-    def _initialize_actors(self, config):
+    def _initialize_actors(self, config, add_scenario_type = True):
         """
         Creates a parked vehicle on the side of the road
         """
@@ -146,9 +146,33 @@ class VehicleOpensDoorTwoWays(BasicScenario):
 
         self._end_wp = self._move_waypoint_forward(self._front_wp, self._end_distance)
 
+        # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [self._parked_actor, None, self._direction, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[
+                type(self).__name__]["obstacles"] = [
+                    self._parked_actor
+            ]
+            CarlaDataProvider.memory[
+                type(self).__name__]["vehicle_door_side"] = [
+                    "left" if self._direction == 'right' else "right"
+            ]
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "first_actor": self._parked_actor,
+                "last_actor": None,
+                "direction": self._direction,
+                "changed_route": False,
+                "from_index": 1e9,
+                "to_index": 1e9,
+                "path_clear": False
+            })
+
+
     def _create_behavior(self):
         """
-        Leave space in front, as the TM doesn't detect open doors, and change the opposite frequency 
+        Leave space in front, as the TM doesn't detect open doors, and change the opposite frequency
         so that the ego can pass
         """
         reference_wp = self._parked_wp.get_left_lane()
@@ -177,7 +201,9 @@ class VehicleOpensDoorTwoWays(BasicScenario):
         behavior.add_child(trigger_adversary)
 
         door = carla.VehicleDoor.FR if self._direction == 'left' else carla.VehicleDoor.FL
-        behavior.add_child(OpenVehicleDoor(self._parked_actor, door))
+        def callback_open_door():
+            CarlaDataProvider.memory[type(self).__name__]["vehicle_opened_door"] = True
+        behavior.add_child(OpenVehicleDoor(self._parked_actor, door, callback=callback_open_door))
         behavior.add_child(StopBackVehicles())
         behavior.add_child(Idle(self._opposite_wait_duration))
         if self.route_mode:
@@ -192,8 +218,13 @@ class VehicleOpensDoorTwoWays(BasicScenario):
             root.add_child(SwitchWrongDirectionTest(True))
             root.add_child(ChangeOppositeBehavior(active=True))
         for actor in self.other_actors:
-            root.add_child(ActorDestroy(actor))
+            def callback_close_door ():
+                CarlaDataProvider.memory[type(self).__name__]["vehicle_opened_door"] = False
+            root.add_child(ActorDestroy(actor,  callback=callback_close_door))
             root.add_child(StartBackVehicles())
+
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
 
         return root
 
@@ -211,4 +242,5 @@ class VehicleOpensDoorTwoWays(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

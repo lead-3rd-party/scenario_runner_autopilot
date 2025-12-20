@@ -159,8 +159,8 @@ class StaticCutIn(BasicScenario):
         self._side_transforms.append([self._adversary_actor, side_wp.transform])
         self.other_actors.append(self._adversary_actor)
 
-        # This starts the engine, to allow the adversary to instantly move 
-        self._adversary_actor.apply_control(carla.VehicleControl(throttle=1.0, brake=1.0)) 
+        # This starts the engine, to allow the adversary to instantly move
+        self._adversary_actor.apply_control(carla.VehicleControl(throttle=1.0, brake=1.0))
 
         # Move to the front
         next_wps = blocker_wp.next(self._vehicle_gap)
@@ -200,6 +200,11 @@ class StaticCutIn(BasicScenario):
                     actor.destroy()
                 raise ValueError("Couldn't find a proper position for the cut in vehicle")
             blocker_wp = next_wps[0]
+
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[
+            type(self).__name__
+        ]["cut_in_vehicle"] = self._adversary_actor  # added
 
     def _create_behavior(self):
         """
@@ -253,6 +258,9 @@ class StaticCutIn(BasicScenario):
             sequence.add_child(ChangeRoadBehavior(extra_space=0))
             sequence.add_child(ReAddRoadLane(1 if self._direction == 'right' else -1))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -268,4 +276,5 @@ class StaticCutIn(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

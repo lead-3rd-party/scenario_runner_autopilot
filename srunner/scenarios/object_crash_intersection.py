@@ -196,6 +196,9 @@ class BaseVehicleTurning(BasicScenario):
         sequence.add_child(ActorDestroy(self.other_actors[0], name="DestroyAdversary"))
         sequence.add_child(DriveDistance(self.ego_vehicles[0], self._ego_end_distance, name="EndCondition"))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -209,6 +212,7 @@ class BaseVehicleTurning(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -227,6 +231,15 @@ class VehicleTurningRight(BaseVehicleTurning):
         super(VehicleTurningRight, self).__init__(
             world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout, "VehicleTurningRight")
 
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
 
 class VehicleTurningLeft(BaseVehicleTurning):
     """
@@ -243,6 +256,15 @@ class VehicleTurningLeft(BaseVehicleTurning):
         super(VehicleTurningLeft, self).__init__(
             world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout, "VehicleTurningLeft")
 
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
 
 class VehicleTurningRoute(BaseVehicleTurning):
     """
@@ -258,6 +280,14 @@ class VehicleTurningRoute(BaseVehicleTurning):
         self._subtype = 'route'
         super(VehicleTurningRoute, self).__init__(
             world, ego_vehicles, config, randomize, debug_mode, criteria_enable, timeout, "VehicleTurningRoute")
+
+    def _initialize_actors(self, config):
+        """
+        Custom initialization
+        """
+        super()._initialize_actors(config)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
 
     def _create_test_criteria(self):
         """
@@ -364,6 +394,7 @@ class VehicleTurningRoutePedestrian(BasicScenario):
             self.parking_slots.append(parking_location)
 
         self.other_actors.append(adversary)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -397,6 +428,9 @@ class VehicleTurningRoutePedestrian(BasicScenario):
         sequence.add_child(ActorDestroy(self.other_actors[0], name="DestroyAdversary"))
         sequence.add_child(DriveDistance(self.ego_vehicles[0], self._ego_end_distance, name="EndCondition"))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -410,6 +444,7 @@ class VehicleTurningRoutePedestrian(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
     # TODO: Pedestrian have an issue with large maps were setting them to dormant breaks them,

@@ -146,6 +146,7 @@ class PedestrianCrossing(BasicScenario):
             walker_data['transform'] = spawn_transform
             walker_data['distance'] = move_dist
             walker_data['duration'] = move_dist / walker_data['speed']
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -198,6 +199,9 @@ class PedestrianCrossing(BasicScenario):
 
         # Remove everything
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -213,6 +217,7 @@ class PedestrianCrossing(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
     # TODO: Pedestrian have an issue with large maps were setting them to dormant breaks them,

@@ -14,6 +14,7 @@ suddenly hard breaking, forcing the ego to avoid the collision
 
 import py_trees
 
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.scenarioatomics.atomic_behaviors import Idle
 from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import DriveDistance
 from srunner.scenarios.basic_scenario import BasicScenario
@@ -49,9 +50,11 @@ class HardBreakRoute(BasicScenario):
 
     def _initialize_actors(self, config):
         """
-        Custom initialization
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
         """
-        pass
+        #super()._initialize_actors(config)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -65,6 +68,9 @@ class HardBreakRoute(BasicScenario):
         sequence.add_child(StartFrontVehicles())
         sequence.add_child(DriveDistance(self.ego_vehicles[0], self.end_distance))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -77,4 +83,5 @@ class HardBreakRoute(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

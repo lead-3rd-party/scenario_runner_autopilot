@@ -102,6 +102,7 @@ class ControlLoss(BasicScenario):
         self.other_actors.append(first_debris)
         self.other_actors.append(second_debris)
         self.other_actors.append(third_debris)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _get_noise_parameters(self):
         """Randomizes the mean to be either positive or negative"""
@@ -155,6 +156,10 @@ class ControlLoss(BasicScenario):
         end_distance = self._end_distance - self._distance[-1]
         sequence.add_child(DriveDistance(self.ego_vehicles[0], end_distance))
 
+
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         root.add_child(sequence)
         root.add_child(DriveDistance(self.ego_vehicles[0], self._end_distance))
         return root
@@ -172,4 +177,5 @@ class ControlLoss(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

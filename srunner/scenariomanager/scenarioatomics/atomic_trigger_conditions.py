@@ -1236,7 +1236,6 @@ class WaitForTrafficLightState(AtomicCondition):
 
         return new_status
 
-
 class WaitEndIntersection(AtomicCondition):
 
     """
@@ -1245,12 +1244,13 @@ class WaitEndIntersection(AtomicCondition):
     If 'junction_id' is given, it will wait until that specific junction has finished
     """
 
-    def __init__(self, actor, junction_id=None, debug=False, name="WaitEndIntersection"):
+    def __init__(self, actor, junction_id=None, debug=False, name="WaitEndIntersection", pop_activate_senario=False):
         super(WaitEndIntersection, self).__init__(name)
         self.actor = actor
         self.debug = debug
         self._junction_id = junction_id
         self._inside_junction = False
+        self.pop_activate_senario = pop_activate_senario
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
     def update(self):
@@ -1270,10 +1270,9 @@ class WaitEndIntersection(AtomicCondition):
 
         # And to leave it
         elif self._inside_junction and not waypoint.is_junction:
-            if self.debug:
-                print("--- Leaving the junction")
             new_status = py_trees.common.Status.SUCCESS
-
+            if self.pop_activate_senario:
+                CarlaDataProvider.clean_current_active_scenario()
         return new_status
 
 

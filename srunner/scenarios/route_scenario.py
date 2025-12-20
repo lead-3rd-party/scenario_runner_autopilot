@@ -239,6 +239,7 @@ class RouteScenario(BasicScenario):
             except Exception as e:
                 if not debug:
                     print("Skipping scenario '{}' due to setup error: {}".format(scenario_config.type, e))
+                    raise e
                 else:
                     traceback.print_exc()
                 continue
@@ -284,7 +285,9 @@ class RouteScenario(BasicScenario):
         behavior.add_child(scenario_triggerer)  # Tick the ScenarioTriggerer before the scenarios
 
         # Add the Background Activity
-        behavior.add_child(BackgroundBehavior(self.ego_vehicles[0], self.route, name="BackgroundActivity"))
+        DEACTIVATE_TRAFFIC = int(os.environ.get('DEACTIVATE_TRAFFIC', 0))
+        if not DEACTIVATE_TRAFFIC:
+            behavior.add_child(BackgroundBehavior(self.ego_vehicles[0], self.route, name="BackgroundActivity"))
 
         behavior.add_children(scenario_behaviors)
         return behavior
@@ -381,4 +384,5 @@ class RouteScenario(BasicScenario):
         """
         Remove all actors upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

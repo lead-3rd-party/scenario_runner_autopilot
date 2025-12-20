@@ -83,7 +83,7 @@ class ConstructionObstacle(BasicScenario):
 
         super().__init__("ConstructionObstacle", ego_vehicles, config, world, debug_mode, False, criteria_enable)
 
-    def _initialize_actors(self, config):
+    def _initialize_actors(self, config, add_scenario_type = True):
         """Creates all props part of the construction"""
         self._spawn_side_prop(self._reference_waypoint)
 
@@ -94,6 +94,29 @@ class ConstructionObstacle(BasicScenario):
         self._create_construction_setup(self._construction_wp.transform, self._reference_waypoint.lane_width)
 
         self._end_wp = self._move_waypoint_forward(self._construction_wp, self._end_distance)
+
+        # add actors, that are relevant for the Expert to the list active_scenarios
+        traffic_warning = self.other_actors[1]
+        last_cone = self.other_actors[-2]
+
+        #sometimes ConstructionObstacle and ConstructionObstacleTwoWays are wrong labeled, hence distinguish them here
+        side_lane_wp = self._construction_wp.get_left_lane() if self._direction == 'right' else self._construction_wp.get_right_lane()
+        self.traffic_warning = traffic_warning
+        self.last_cone = last_cone
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [traffic_warning, last_cone, self._direction, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[type(self).__name__]["obstacles"] = self.other_actors
+            CarlaDataProvider.memory[type(self).__name__].update(
+                {
+                    "first_actor": traffic_warning,
+                    "last_actor": last_cone,
+                    "direction": self._direction,
+                    "changed_route": False,
+                    "from_index": 1e9,
+                    "to_index": 1e9,
+                    "path_clear": False
+                }
+            )
 
     def _move_waypoint_forward(self, wp, distance):
         dist = 0
@@ -226,7 +249,7 @@ class ConstructionObstacle(BasicScenario):
 
         for actor, transform in self._construction_transforms:
             root.add_child(ActorTransformSetter(actor, transform, True))
-    
+
         end_condition = py_trees.composites.Parallel(policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         end_condition.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
         end_condition.add_child(WaitUntilInFrontPosition(self.ego_vehicles[0], self._end_wp.transform, False))
@@ -248,6 +271,9 @@ class ConstructionObstacle(BasicScenario):
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
 
     def _create_test_criteria(self):
@@ -264,6 +290,7 @@ class ConstructionObstacle(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -292,7 +319,7 @@ class ConstructionObstacleTwoWays(ConstructionObstacle):
 
         for actor, transform in self._construction_transforms:
             root.add_child(ActorTransformSetter(actor, transform, True))
-    
+
         end_condition = py_trees.composites.Parallel(policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         end_condition.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
         end_condition.add_child(WaitUntilInFrontPosition(self.ego_vehicles[0], self._end_wp.transform, False))
@@ -316,4 +343,28 @@ class ConstructionObstacleTwoWays(ConstructionObstacle):
         for actor in self.other_actors:
             root.add_child(ActorDestroy(actor))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        root.add_child(ClearScenarioType(id(self)))
+
         return root
+
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config,add_scenario_type=False)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [self.traffic_warning, self.last_cone, self._direction, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[type(self).__name__]["obstacles"] = self.other_actors
+            CarlaDataProvider.memory[type(self).__name__].update(
+                {
+                    "first_actor": self.traffic_warning,
+                    "last_actor": self.last_cone,
+                    "direction": self._direction,
+                    "changed_route": False,
+                    "from_index": 1e9,
+                    "to_index": 1e9,
+                    "path_clear": False
+                })

@@ -60,7 +60,7 @@ class ParkingExit(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -165,6 +165,8 @@ class ParkingExit(BasicScenario):
         self._end_side_transform = self.ego_vehicles[0].get_transform()
         self._end_side_transform.location.z -= 500
 
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+
     def _get_displaced_location(self, actor, wp):
         """
         Calculates the transforming such that the actor is at the sidemost part of the lane
@@ -210,6 +212,9 @@ class ParkingExit(BasicScenario):
             sequence.add_child(ActorDestroy(actor))
         sequence.add_child(ChangeRoadBehavior(spawn_dist=15))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -226,4 +231,5 @@ class ParkingExit(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()

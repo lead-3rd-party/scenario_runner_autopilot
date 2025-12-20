@@ -65,7 +65,7 @@ class EnterActorFlow(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -93,6 +93,23 @@ class EnterActorFlow(BasicScenario):
                          debug_mode,
                          criteria_enable=criteria_enable)
 
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "source_wp": self._map.get_waypoint(self._start_actor_flow),
+                "sink_wp": self._map.get_waypoint(self._end_actor_flow),
+                "source_wps": get_same_dir_lanes(self._map.get_waypoint(self._start_actor_flow)),
+                "sink_wps": get_same_dir_lanes(self._map.get_waypoint(self._end_actor_flow)),
+            })
+
     def _create_behavior(self):
         """
         Hero vehicle is entering a junction in an urban area, at a signalized intersection,
@@ -112,7 +129,7 @@ class EnterActorFlow(BasicScenario):
             root.add_child(InTriggerDistanceToLocation(self.ego_vehicles[0], sink_wp.transform.location, self._sink_distance))
             root.add_child(ActorFlow(
                 source_wp, sink_wp, self._source_dist_interval, self._sink_distance,
-                self._flow_speed, initial_actors=True, initial_junction=True))
+                self._flow_speed, initial_actors=True, initial_junction=True, parent_scenario_type= type(self).__name__))
         root.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
 
         sequence = py_trees.composites.Sequence()
@@ -139,6 +156,9 @@ class EnterActorFlow(BasicScenario):
         if self.route_mode:
             sequence.add_child(SwitchRouteSources(True))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -155,6 +175,7 @@ class EnterActorFlow(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -162,6 +183,22 @@ class EnterActorFlowV2(EnterActorFlow):
     """
     Variation of EnterActorFlow for special highway entry exits with dedicated lanes
     """
+    def _initialize_actors(self, config):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config, add_scenario_type=False)
+        CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+        CarlaDataProvider.memory[
+            type(self).__name__
+        ].update({
+            "source_wp": self._map.get_waypoint(self._start_actor_flow),
+            "sink_wp": self._map.get_waypoint(self._end_actor_flow),
+            "source_wps": get_same_dir_lanes(self._map.get_waypoint(self._start_actor_flow)),
+            "sink_wps": get_same_dir_lanes(self._map.get_waypoint(self._end_actor_flow)),
+        })
+
     def _create_behavior(self):
         """
         Hero vehicle is entering a junction in an urban area, at a signalized intersection,
@@ -177,7 +214,7 @@ class EnterActorFlowV2(EnterActorFlow):
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         root.add_child(ActorFlow(
                 source_wp, sink_wp, self._source_dist_interval, self._sink_distance,
-                self._flow_speed, initial_actors=True, initial_junction=True))
+                self._flow_speed, initial_actors=True, initial_junction=True, parent_scenario_type=type(self).__name__))
         for sink_wp in sink_wps:
             root.add_child(InTriggerDistanceToLocation(self.ego_vehicles[0], sink_wp.transform.location, self._sink_distance))
         root.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
@@ -224,6 +261,10 @@ class EnterActorFlowV2(EnterActorFlow):
         if self.route_mode:
             sequence.add_child(SwitchRouteSources(True))
 
+
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
 
@@ -232,13 +273,13 @@ class HighwayExit(BasicScenario):
     This scenario is similar to CrossActorFlow
     It will remove the BackgroundActivity from the lane where ActorFlow starts.
     Then vehicles (cars) will start driving from start_actor_flow location to end_actor_flow location
-    in a relatively high speed, forcing the ego to accelerate to cut in the actor flow 
+    in a relatively high speed, forcing the ego to accelerate to cut in the actor flow
     then exit from the highway.
     This scenario works when Background Activity is running in route mode. And there should be no junctions in front of the ego.
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -263,6 +304,15 @@ class HighwayExit(BasicScenario):
                          world,
                          debug_mode,
                          criteria_enable=criteria_enable)
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -293,6 +343,9 @@ class HighwayExit(BasicScenario):
             sequence.add_child(RemoveRoadLane(source_wp))
         sequence.add_child(root)
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -309,6 +362,7 @@ class HighwayExit(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
@@ -323,7 +377,7 @@ class MergerIntoSlowTraffic(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -351,6 +405,15 @@ class MergerIntoSlowTraffic(BasicScenario):
                          world,
                          debug_mode,
                          criteria_enable=criteria_enable)
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
     def _create_behavior(self):
         """
@@ -396,6 +459,9 @@ class MergerIntoSlowTraffic(BasicScenario):
         if self.route_mode:
             sequence.add_child(SwitchRouteSources(True))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -412,12 +478,13 @@ class MergerIntoSlowTraffic(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
 
 
 class MergerIntoSlowTrafficV2(MergerIntoSlowTraffic):
     """
-    Variation of MergerIntoSlowTraffic 
+    Variation of MergerIntoSlowTraffic
     """
 
     def _create_behavior(self):
@@ -479,7 +546,19 @@ class MergerIntoSlowTrafficV2(MergerIntoSlowTraffic):
         if self.route_mode:
             sequence.add_child(SwitchRouteSources(True))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config, add_scenario_type=False)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
 
 
 class InterurbanActorFlow(BasicScenario):
@@ -489,7 +568,7 @@ class InterurbanActorFlow(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -527,6 +606,21 @@ class InterurbanActorFlow(BasicScenario):
                          world,
                          debug_mode,
                          criteria_enable=criteria_enable)
+
+    def _initialize_actors(self, config, add_scenario_type=True):
+        """
+        Default initialization of other actors.
+        Override this method in child class to provide custom initialization.
+        """
+        super()._initialize_actors(config)
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "source_wp": self._source_wp,
+                "sink_wp": self._sink_wp,
+            })
 
     def _get_entry_exit_route_lanes(self, wp, route):
 
@@ -572,7 +666,7 @@ class InterurbanActorFlow(BasicScenario):
         root = py_trees.composites.Parallel(
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         root.add_child(ActorFlow(
-            self._source_wp, self._sink_wp, self._source_dist_interval, self._sink_distance, self._flow_speed))
+            self._source_wp, self._sink_wp, self._source_dist_interval, self._sink_distance, self._flow_speed, parent_scenario_type= type(self).__name__))
         root.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
         root.add_child(WaitEndIntersection(self.ego_vehicles[0]))
 
@@ -592,6 +686,10 @@ class InterurbanActorFlow(BasicScenario):
         if self.route_mode:
             sequence.add_child(ChangeOppositeBehavior(active=True))
 
+
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -608,8 +706,8 @@ class InterurbanActorFlow(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
-
 
 class InterurbanAdvancedActorFlow(BasicScenario):
     """
@@ -619,7 +717,7 @@ class InterurbanAdvancedActorFlow(BasicScenario):
     """
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=180):
+                 timeout=90):
         """
         Setup all relevant parameters and create scenario
         and instantiate scenario manager
@@ -666,8 +764,8 @@ class InterurbanAdvancedActorFlow(BasicScenario):
             exit_wp = exit_wps[0]
         return exit_wp
 
-    def _initialize_actors(self, config):
-        
+    def _initialize_actors(self, config, add_scenario_type=True):
+
         self._source_wp_1 = self._map.get_waypoint(self._start_actor_flow_1)
         self._sink_wp_1 = self._map.get_waypoint(self._end_actor_flow_1)
 
@@ -725,6 +823,16 @@ class InterurbanAdvancedActorFlow(BasicScenario):
 
         self._remove_entries = entry_wps
         self._remove_exits = exit_wps
+        if add_scenario_type:
+            CarlaDataProvider.active_scenarios.append((type(self).__name__, [None, None, None, False, 1e9, 1e9, False], id(self))) # added
+            CarlaDataProvider.memory[
+                type(self).__name__
+            ].update({
+                "source_wp_1": self._source_wp_1,
+                "sink_wp_1": self._sink_wp_1,
+                "source_wp_2": self._source_wp_2,
+                "sink_wp_2": self._sink_wp_2,
+            })
 
     def _create_behavior(self):
         """
@@ -734,9 +842,9 @@ class InterurbanAdvancedActorFlow(BasicScenario):
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         root.add_child(WaitUntilInFrontPosition(self.ego_vehicles[0], self._sink_wp_2.transform))
         root.add_child(ActorFlow(
-            self._source_wp_1, self._sink_wp_1, self._source_dist_interval, self._sink_distance, self._flow_speed))
+            self._source_wp_1, self._sink_wp_1, self._source_dist_interval, self._sink_distance, self._flow_speed, parent_scenario_type=type(self).__name__))
         root.add_child(ActorFlow(
-            self._source_wp_2, self._sink_wp_2, self._source_dist_interval, self._sink_distance, self._flow_speed))
+            self._source_wp_2, self._sink_wp_2, self._source_dist_interval, self._sink_distance, self._flow_speed, parent_scenario_type=type(self).__name__))
         root.add_child(ScenarioTimeout(self._scenario_timeout, self.config.name))
 
         sequence = py_trees.composites.Sequence()
@@ -759,6 +867,9 @@ class InterurbanAdvancedActorFlow(BasicScenario):
             sequence.add_child(SwitchRouteSources(True))
             sequence.add_child(ChangeOppositeBehavior(active=True))
 
+        from srunner.tools.background_manager import ClearScenarioType
+        sequence.add_child(ClearScenarioType(id(self)))
+
         return sequence
 
     def _create_test_criteria(self):
@@ -775,4 +886,5 @@ class InterurbanAdvancedActorFlow(BasicScenario):
         """
         Remove all actors and traffic lights upon deletion
         """
+        super().__del__()
         self.remove_all_actors()
