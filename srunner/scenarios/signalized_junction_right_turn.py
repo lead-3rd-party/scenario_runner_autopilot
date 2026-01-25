@@ -190,11 +190,7 @@ class SignalizedJunctionRightTurn(JunctionRightTurn):
 
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
-<<<<<<< HEAD
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-=======
-            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
->>>>>>> 0126bfa (Update)
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
             CarlaDataProvider.memory[
                 type(self).__name__
             ].update({
