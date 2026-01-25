@@ -101,7 +101,11 @@ class EnterActorFlow(BasicScenario):
         super()._initialize_actors(config)
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
+<<<<<<< HEAD
         CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
+=======
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+>>>>>>> 0126bfa (Update)
             CarlaDataProvider.memory[
                 type(self).__name__
             ].update({
@@ -315,7 +319,11 @@ class HighwayExit(BasicScenario):
         super()._initialize_actors(config)
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
+<<<<<<< HEAD
         CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
+=======
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+>>>>>>> 0126bfa (Update)
 
     def _create_behavior(self):
         """
@@ -417,7 +425,11 @@ class MergerIntoSlowTraffic(BasicScenario):
         super()._initialize_actors(config)
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
+<<<<<<< HEAD
         CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
+=======
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+>>>>>>> 0126bfa (Update)
 
     def _create_behavior(self):
         """
@@ -563,7 +575,11 @@ class MergerIntoSlowTrafficV2(MergerIntoSlowTraffic):
         super()._initialize_actors(config, add_scenario_type=False)
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
+<<<<<<< HEAD
         CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
+=======
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+>>>>>>> 0126bfa (Update)
 
 
 class InterurbanActorFlow(BasicScenario):
@@ -620,7 +636,11 @@ class InterurbanActorFlow(BasicScenario):
         super()._initialize_actors(config)
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
+<<<<<<< HEAD
         CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
+=======
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+>>>>>>> 0126bfa (Update)
             CarlaDataProvider.memory[
                 type(self).__name__
             ].update({
@@ -831,7 +851,7 @@ class InterurbanAdvancedActorFlow(BasicScenario):
         self._remove_exits = exit_wps
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
             CarlaDataProvider.memory[
                 type(self).__name__
             ].update({
