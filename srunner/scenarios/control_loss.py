@@ -105,7 +105,7 @@ class ControlLoss(BasicScenario):
         self.other_actors.append(second_debris)
         self.other_actors.append(third_debris)
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
 
     def _get_noise_parameters(self):
         """Randomizes the mean to be either positive or negative"""

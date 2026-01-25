@@ -228,7 +228,7 @@ class CrossJunctionDefectTrafficLight(CrossJunctionDefectTrafficLightBase):
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import \
                 ActiveScenario
-            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self)))
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
             
             # Store information for all traffic flows
             memory_data = {}

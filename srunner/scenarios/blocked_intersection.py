@@ -98,7 +98,7 @@ class BlockedIntersection(BasicScenario):
         blocker.set_light_state(carla.VehicleLightState(lights))
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
         CarlaDataProvider.memory[type(self).__name__]["obstacles"] = [blocker]
 
     def _create_behavior(self):

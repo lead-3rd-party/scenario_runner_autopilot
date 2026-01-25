@@ -110,7 +110,7 @@ class ChangeLane(BasicScenario):
             slow_car_waypoint.transform.rotation)
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
 
     def _create_behavior(self):
 

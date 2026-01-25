@@ -149,7 +149,7 @@ class VehicleOpensDoorTwoWays(BasicScenario):
         # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
-            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self._parked_actor, metadata=self._direction, scenario_id=id(self))) # added
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self._parked_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
             CarlaDataProvider.memory[
                 type(self).__name__]["obstacles"] = [
                     self._parked_actor

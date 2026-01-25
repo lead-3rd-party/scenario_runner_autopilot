@@ -200,7 +200,7 @@ class StaticCutIn(BasicScenario):
             blocker_wp = next_wps[0]
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
         CarlaDataProvider.memory[
             type(self).__name__
         ]["cut_in_vehicle"] = self._adversary_actor  # added

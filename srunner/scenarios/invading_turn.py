@@ -114,7 +114,7 @@ class InvadingTurn(BasicScenario):
         first_cone = self.other_actors[-1]
         last_cone = self.other_actors[0]
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=first_cone, last_actor=last_cone, metadata=self._true_offset, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=first_cone, last_actor=last_cone, metadata=self._true_offset, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
         CarlaDataProvider.memory[
             type(self).__name__
         ].update({

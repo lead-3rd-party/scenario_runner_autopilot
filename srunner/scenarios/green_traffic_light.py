@@ -65,7 +65,7 @@ class PriorityAtJunction(BasicScenario):
         self._get_traffic_lights(self._junction, ego_junction_dist)
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
 
     def _get_traffic_lights(self, junction, junction_dist):
         """Get the traffic light of the junction, mapping their states"""

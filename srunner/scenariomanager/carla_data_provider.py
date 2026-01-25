@@ -96,10 +96,11 @@ class ActiveScenario:
         to_index: Index used for route changes
         path_clear: Boolean flag indicating if the path is clear
         scenario_id: Unique identifier for the scenario instance (typically id(self))
+        trigger_location: The trigger point location of the scenario (for sorting)
     """
     
     def __init__(self, name, first_actor=None, last_actor=None, metadata=None, 
-                 changed_route=False, from_index=1e9, to_index=1e9, path_clear=False, scenario_id=None):
+                 changed_route=False, from_index=1e9, to_index=1e9, path_clear=False, scenario_id=None, trigger_location=None):
         self.name = name
         self.first_actor = first_actor
         self.last_actor = last_actor
@@ -109,6 +110,7 @@ class ActiveScenario:
         self.to_index = to_index
         self.path_clear = path_clear
         self.scenario_id = scenario_id
+        self.trigger_location = trigger_location
     
     def __repr__(self):
         return f"ActiveScenario(name='{self.name}', first_actor={self.first_actor}, last_actor={self.last_actor}, scenario_id={self.scenario_id})"

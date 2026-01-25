@@ -91,7 +91,7 @@ class StationaryObjectCrossing(BasicScenario):
         self.other_actors.append(static)
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
 
     def _create_behavior(self):
         """
@@ -295,7 +295,7 @@ class DynamicObjectCrossing(BasicScenario):
         self.other_actors.append(blocker)
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
 
     def _create_behavior(self):
         """
@@ -509,7 +509,7 @@ class ParkingCrossingPedestrian(BasicScenario):
 
         self._collision_wp = walker_wp
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
 
     def _create_behavior(self):
         """

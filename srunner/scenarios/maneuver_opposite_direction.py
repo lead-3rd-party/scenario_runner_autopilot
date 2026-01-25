@@ -116,7 +116,7 @@ class ManeuverOppositeDirection(BasicScenario):
         self._third_actor_transform = second_prop_transform
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
 
     def _create_behavior(self):
         """

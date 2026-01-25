@@ -86,7 +86,7 @@ class HighwayCutIn(BasicScenario):
         self._cut_in_vehicle.set_simulate_physics(False)
 
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self))) # added
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
         CarlaDataProvider.memory[
             type(self).__name__
         ]["cut_in_vehicle"] = self._cut_in_vehicle
