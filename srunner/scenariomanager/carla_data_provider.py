@@ -132,7 +132,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     """
     # Saves, which type of scenario is currently runninng. That's necessary since some scenarios can't be detected / distinguished.
     # the key saves the scenario type and the value all relevant data
-    active_scenarios = []
+    active_scenarios: list[ActiveScenario]= []
     previous_active_scenario = None 
     memory = DEFAULT_MEMORY()
     previous_memory = DEFAULT_MEMORY()
