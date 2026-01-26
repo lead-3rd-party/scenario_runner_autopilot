@@ -177,7 +177,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
             CarlaDataProvider.active_scenarios = CarlaDataProvider.active_scenarios[1:]
             print(f"[CarlaDataProvider] Memory after cleaning {CarlaDataProvider.previous_active_scenario}: {CarlaDataProvider.memory[CarlaDataProvider.previous_active_scenario]}")
             print(f"[CarlaDataProvider] Queue after cleaning {CarlaDataProvider.previous_active_scenario}:")
-            scenarios_str = '\n\t'.join([str(scenario) for scenario in CarlaDataProvider.active_scenarios])
+            scenarios_str = "\t" + '\n\t'.join([str(scenario) for scenario in CarlaDataProvider.active_scenarios])
             print(scenarios_str)
         else:
             raise ValueError("No active scenario to clean up")
