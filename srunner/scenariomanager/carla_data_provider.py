@@ -100,7 +100,7 @@ class ActiveScenario:
             self.meta = meta
     
     @staticmethod
-    def _initialize_meta_for_scenario_type(scenario_type, scenario_id):
+    def _initialize_meta_for_scenario_type(scenario_type, scenario_id) -> dict:
         """Initialize meta dictionary with appropriate defaults for scenario type."""
         if scenario_type in ["SignalizedJunctionLeftTurn", "NonSignalizedJunctionLeftTurn", "NonSignalizedJunctionLeftTurnEnterFlow", "SignalizedJunctionLeftTurnEnterFlow", "InterurbanActorFlow", "SignalizedJunctionRightTurn", "NonSignalizedJunctionRightTurn", "EnterActorFlow", "EnterActorFlowV2"]:
             return {
@@ -229,10 +229,14 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
     In addition it provides access to the map and the transform of all traffic lights
     """
-    # Saves, which type of scenario is currently running. That's necessary since some scenarios can't be detected / distinguished.
-    # the key saves the scenario type and the value all relevant data
+    # Saves, which type of scenario is currently running.
+    # That's necessary since some scenarios can't be detected / distinguished.
     active_scenarios: list[ActiveScenario]= []
     previous_active_scenario: ActiveScenario | None = None 
+    _global_memory = {"allow_new_actors": True, "next_traffic_light": None}
+    _route_xml_path = None  # Path to the current route XML file
+    
+    # ============================================================================
     _actor_velocity_map = {}
     _actor_location_map = {}
     _actor_transform_map = {}
@@ -254,26 +258,22 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     _grp = None
     _runtime_init_flag = False
     _lock = threading.Lock()
-    _route_xml_path = None  # Path to the current route XML file
-    # Special global memory for non-scenario specific data
-    _global_memory = {"allow_new_actors": True, "next_traffic_light": None}
 
     @staticmethod
-    def current_active_scenario_type():
+    def current_active_scenario_type() -> str | None:
         if len(CarlaDataProvider.active_scenarios) > 0:
             return CarlaDataProvider.active_scenarios[0].name
         return None
     
     @staticmethod
-    def get_current_scenario_memory():
+    def get_current_scenario_memory() -> dict | None:
         """Get the meta dict for the current active scenario (first in list)."""
         if len(CarlaDataProvider.active_scenarios) > 0:
             return CarlaDataProvider.active_scenarios[0].meta
         return None
-        return None
 
     @staticmethod
-    def remove_scenario(scenario):
+    def remove_scenario(scenario: ActiveScenario):
         """Remove a scenario from active scenarios.
         
         Args:
