@@ -12,6 +12,7 @@ local buffers to avoid blocking calls to CARLA
 
 from __future__ import print_function
 
+import copy
 import math
 import re
 import threading
@@ -258,8 +259,34 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     def clean_current_active_scenario():
         if len(CarlaDataProvider.active_scenarios) > 0:
             scenario_name = CarlaDataProvider.active_scenarios[0].name
-            CarlaDataProvider.previous_memory[scenario_name] = CarlaDataProvider.memory[scenario_name]
-            CarlaDataProvider.memory[scenario_name] = DEFAULT_MEMORY().get(scenario_name, {})
+            scenario_id = CarlaDataProvider.active_scenarios[0].scenario_id
+            
+            # Deep copy the current memory entry to previous_memory
+            if scenario_name in CarlaDataProvider.memory and len(CarlaDataProvider.memory[scenario_name]) > 0:
+                # Find the memory entry for this specific scenario instance
+                current_memory = None
+                for memory_entry in CarlaDataProvider.memory[scenario_name]:
+                    if memory_entry.get('id') == scenario_id:
+                        current_memory = copy.deepcopy(memory_entry)
+                        break
+                
+                if current_memory:
+                    # Store as a list to match the structure
+                    CarlaDataProvider.previous_memory[scenario_name] = [current_memory]
+                else:
+                    # If no matching entry found, store the entire list (fallback)
+                    CarlaDataProvider.previous_memory[scenario_name] = copy.deepcopy(CarlaDataProvider.memory[scenario_name])
+                
+                # Remove only the specific memory entry for this scenario instance
+                CarlaDataProvider.memory[scenario_name] = [
+                    mem for mem in CarlaDataProvider.memory[scenario_name]
+                    if mem.get('id') != scenario_id
+                ]
+                
+                # If the list is now empty, we can optionally remove it or leave it as empty list
+                if not CarlaDataProvider.memory[scenario_name]:
+                    CarlaDataProvider.memory[scenario_name] = []
+            
             CarlaDataProvider.previous_active_scenario = scenario_name
             CarlaDataProvider.active_scenarios = CarlaDataProvider.active_scenarios[1:]
             print(f"[CarlaDataProvider] Memory after cleaning {CarlaDataProvider.previous_active_scenario}: {CarlaDataProvider.memory[CarlaDataProvider.previous_active_scenario]}")
