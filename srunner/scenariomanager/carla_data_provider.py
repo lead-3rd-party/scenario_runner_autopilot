@@ -254,6 +254,12 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
             if not memory_list:
                 del CarlaDataProvider.memory[scenario_type]
                 print(f"[CarlaDataProvider] Removed empty memory list for scenario type {scenario_type}")
+        
+        # Print memory and queue status after removal
+        print(f"[CarlaDataProvider] Memory after removing {scenario_type}: {CarlaDataProvider.memory.get(scenario_type, [])}")
+        print(f"[CarlaDataProvider] Queue after removing {scenario_type}:")
+        scenarios_str = "\t" + '\n\t'.join([str(scenario) for scenario in CarlaDataProvider.active_scenarios])
+        print(scenarios_str)
 
     @staticmethod
     def clean_current_active_scenario():
