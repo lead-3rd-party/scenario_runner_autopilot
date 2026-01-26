@@ -35,7 +35,10 @@ def calculate_velocity(actor):
 
 
 def get_memory_entry(scenario_type, scenario_id=None):
-    """Get or create the meta dict for an active scenario.
+    """DEPRECATED: Get or create the meta dict for an active scenario.
+    
+    This function is deprecated. Use ActiveScenario's extra_meta parameter instead
+    when creating scenarios.
     
     Args:
         scenario_type: The type of scenario (e.g., 'EnterActorFlow')
@@ -44,14 +47,13 @@ def get_memory_entry(scenario_type, scenario_id=None):
     Returns:
         The meta dict for this scenario instance from the active scenario
     """
+    print(f"[DEPRECATED WARNING] get_memory_entry is deprecated. Use extra_meta parameter in ActiveScenario constructor instead.")
     # Find the scenario in active_scenarios
     for scenario in CarlaDataProvider.active_scenarios:
         if scenario.name == scenario_type and (scenario_id is None or scenario.scenario_id == scenario_id):
             return scenario.meta
     
     # If not found in active scenarios, this shouldn't happen in normal operation
-    # But for backward compatibility during transition, we'll create a temporary one
-    # This should be logged as it indicates potential issues
     print(f"[WARNING] get_memory_entry called for {scenario_type} (id={scenario_id}) but no matching active scenario found")
     return ActiveScenario._initialize_meta_for_scenario_type(scenario_type, scenario_id)
 
@@ -75,7 +77,8 @@ class ActiveScenario:
     """
     @beartype
     def __init__(self, name, first_actor: carla.Actor | None=None, last_actor: carla.Actor | None =None, metadata=None, 
-                 changed_route=False, from_index=1e9, to_index=1e9, path_clear=False, scenario_id=None, trigger_location=None, meta=None):
+                 changed_route=False, from_index=1e9, to_index=1e9, path_clear=False, scenario_id=None, trigger_location=None, 
+                 meta=None, extra_meta=None):
         self.name = name
         self.first_actor = first_actor
         self.last_actor = last_actor
@@ -86,16 +89,11 @@ class ActiveScenario:
         self.path_clear = path_clear
         self.scenario_id = scenario_id
         self.trigger_location = trigger_location
-        # Initialize meta with scenario-type-specific defaults
+        # Initialize meta with scenario-type-specific defaults, then update with extra_meta
         if meta is None:
             self.meta = self._initialize_meta_for_scenario_type(name, scenario_id)
-        else:
-            self.meta = meta
-        self.scenario_id = scenario_id
-        self.trigger_location = trigger_location
-        # Initialize meta with scenario-type-specific defaults
-        if meta is None:
-            self.meta = self._initialize_meta_for_scenario_type(name, scenario_id)
+            if extra_meta is not None:
+                self.meta.update(extra_meta)
         else:
             self.meta = meta
     
