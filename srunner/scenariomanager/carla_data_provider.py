@@ -261,13 +261,14 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
             scenario_name = CarlaDataProvider.active_scenarios[0].name
             scenario_id = CarlaDataProvider.active_scenarios[0].scenario_id
             
-            # Deep copy the current memory entry to previous_memory
+            # Copy the current memory entry to previous_memory (shallow copy for actor references)
             if scenario_name in CarlaDataProvider.memory and len(CarlaDataProvider.memory[scenario_name]) > 0:
                 # Find the memory entry for this specific scenario instance
                 current_memory = None
                 for memory_entry in CarlaDataProvider.memory[scenario_name]:
                     if memory_entry.get('id') == scenario_id:
-                        current_memory = copy.deepcopy(memory_entry)
+                        # Shallow copy is sufficient since actor references shouldn't be duplicated
+                        current_memory = memory_entry.copy()
                         break
                 
                 if current_memory:
@@ -275,7 +276,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
                     CarlaDataProvider.previous_memory[scenario_name] = [current_memory]
                 else:
                     # If no matching entry found, store the entire list (fallback)
-                    CarlaDataProvider.previous_memory[scenario_name] = copy.deepcopy(CarlaDataProvider.memory[scenario_name])
+                    CarlaDataProvider.previous_memory[scenario_name] = [mem.copy() for mem in CarlaDataProvider.memory[scenario_name]]
                 
                 # Remove only the specific memory entry for this scenario instance
                 CarlaDataProvider.memory[scenario_name] = [
