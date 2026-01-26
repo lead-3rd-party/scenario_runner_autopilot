@@ -86,7 +86,7 @@ class MakeTrafficLightRedOnce(AtomicBehavior):
             ego_location = self.ego_vehicle.get_location()
 
             # Find the nearest traffic light
-            traffic_light = CarlaDataProvider.memory["next_traffic_light"]
+            traffic_light = CarlaDataProvider._global_memory["next_traffic_light"]
 
             # Check if ego is close enough to the nearest light and we haven't triggered it yet
             if traffic_light is not None:
@@ -173,7 +173,7 @@ class DisallowActorGeneration(AtomicBehavior):
             "SignalizedJunctionRightTurn",
             "NonSignalizedJunctionRightTurn"
         ]:
-            CarlaDataProvider.memory["allow_new_actors"] = False
+            CarlaDataProvider._global_memory["allow_new_actors"] = False
         return py_trees.common.Status.SUCCESS
 
 class AllowActorGeneration(AtomicBehavior):
@@ -182,7 +182,7 @@ class AllowActorGeneration(AtomicBehavior):
 
     def update(self):
         print("[AllowActorGeneration] Allowing new actors to be spawned again")
-        CarlaDataProvider.memory["allow_new_actors"] = True
+        CarlaDataProvider._global_memory["allow_new_actors"] = True
         return py_trees.common.Status.SUCCESS
 
 
