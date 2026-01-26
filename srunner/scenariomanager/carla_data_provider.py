@@ -20,6 +20,7 @@ from collections import defaultdict
 
 import carla
 from agents.navigation.global_route_planner import GlobalRoutePlanner
+from beartype import beartype
 from numpy import random
 from six import iteritems
 
@@ -148,8 +149,8 @@ class ActiveScenario:
         scenario_id: Unique identifier for the scenario instance (typically id(self))
         trigger_location: The trigger point location of the scenario (for sorting)
     """
-    
-    def __init__(self, name, first_actor=None, last_actor=None, metadata=None, 
+    @beartype
+    def __init__(self, name, first_actor: carla.Actor | None=None, last_actor: carla.Actor | None =None, metadata=None, 
                  changed_route=False, from_index=1e9, to_index=1e9, path_clear=False, scenario_id=None, trigger_location=None):
         self.name = name
         self.first_actor = first_actor
@@ -164,6 +165,80 @@ class ActiveScenario:
     
     def __repr__(self):
         return f"ActiveScenario(name='{self.name}', first_actor={self.first_actor}, last_actor={self.last_actor}, scenario_id={self.scenario_id})"
+    
+    def get_actors_from_memory(self) -> list:
+        """Extract all alive actors from this scenario's memory.
+        
+        Recursively searches through all memory values to find actor objects,
+        regardless of how they are stored (lists, dicts, single values, etc.).
+        
+        Returns:
+            List of alive actors from the scenario's memory.
+        """
+        actors = []
+        scenario_type = self.name
+        scenario_id = self.scenario_id
+        
+        # Get memory for this specific scenario instance
+        if scenario_type not in CarlaDataProvider.memory:
+            return actors
+            
+        memories = CarlaDataProvider.memory[scenario_type]
+        memory = None
+        
+        # Find the memory entry for this scenario instance
+        for mem in memories:
+            if mem.get('id') == scenario_id:
+                memory = mem
+                break
+        
+        if memory is None:
+            return actors
+        
+        # Recursively extract all actors from memory
+        def extract_actors(obj, visited=None):
+            """Recursively extract actors from any data structure."""
+            if visited is None:
+                visited = set()
+            
+            # Avoid infinite recursion
+            obj_id = id(obj)
+            if obj_id in visited:
+                return
+            visited.add(obj_id)
+            
+            # Check if this is an actor
+            if obj is not None and isinstance(obj, carla.Actor) and hasattr(obj, 'is_alive'):
+                try:
+                    if obj.is_alive:
+                        actors.append(obj)
+                except:
+                    pass
+            # Recursively handle lists
+            elif isinstance(obj, list):
+                for item in obj:
+                    extract_actors(item, visited)
+            # Recursively handle dicts (including defaultdict)
+            elif isinstance(obj, dict):
+                for value in obj.values():
+                    extract_actors(value, visited)
+            # Handle tuples
+            elif isinstance(obj, tuple):
+                for item in obj:
+                    extract_actors(item, visited)
+        
+        # Extract actors from memory dict (skip 'id' key)
+        for key, value in memory.items():
+            if key != 'id':
+                extract_actors(value)
+        
+        # Also include first_actor and last_actor from scenario itself
+        if self.first_actor is not None and self.first_actor.is_alive:
+            actors.append(self.first_actor)
+        if self.last_actor is not None and self.last_actor.is_alive:
+            actors.append(self.last_actor)
+        
+        return actors
 
 
 class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
