@@ -14,7 +14,7 @@ from numpy import random
 
 import carla
 
-from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider, get_memory_entry
 from srunner.scenariomanager.scenarioatomics.atomic_behaviors import ActorFlow, TrafficLightFreezer, ScenarioTimeout
 from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import WaitEndIntersection, DriveDistance
 from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest, ScenarioTimeoutTest
@@ -193,9 +193,8 @@ class SignalizedJunctionLeftTurnEnterFlow(JunctionLeftTurnEnterFlow):
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            memory = get_memory_entry(type(self).__name__, id(self))
+            memory.update({
                 "source_wp": self._source_wp,
                 "sink_wp": self._sink_wp,
             })
@@ -266,9 +265,8 @@ class NonSignalizedJunctionLeftTurnEnterFlow(JunctionLeftTurnEnterFlow):
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            memory = get_memory_entry(type(self).__name__, id(self))
+            memory.update({
                 "source_wp": self._source_wp,
                 "sink_wp": self._sink_wp,
             })

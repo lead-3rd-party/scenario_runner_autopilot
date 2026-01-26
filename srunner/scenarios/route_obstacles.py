@@ -15,7 +15,7 @@ from __future__ import print_function
 import py_trees
 import carla
 
-from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider, get_memory_entry
 from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (ActorDestroy,
                                                                       SwitchWrongDirectionTest,
                                                                       BasicAgentBehavior,
@@ -193,8 +193,8 @@ class Accident(BasicScenario):
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=police_car, last_actor=second_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
-            CarlaDataProvider.memory[
-                type(self).__name__].update({
+            memory = get_memory_entry(type(self).__name__, id(self))
+            memory.update({
                         "first_actor": police_car,
                         "last_actor": second_actor,
                         "direction": self._direction,
@@ -314,13 +314,11 @@ class AccidentTwoWays(Accident):
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self.police_car, last_actor=self.second_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
-            CarlaDataProvider.memory[
-                type(self).__name__]["obstacles"] = [
+            memory = get_memory_entry(type(self).__name__, id(self))
+            memory["obstacles"] = [
                     self.police_car, self.first_actor, self.second_actor
             ]
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            memory.update({
                 "first_actor": self.police_car,
                 "last_actor": self.second_actor,
                 "direction": self._direction,
@@ -448,13 +446,11 @@ class ParkedObstacle(BasicScenario):
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=parked_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
-            CarlaDataProvider.memory[
-                type(self).__name__]["obstacles"] = [
+            memory = get_memory_entry(type(self).__name__, id(self))
+            memory["obstacles"] = [
                     parked_actor
             ]
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            memory.update({
                 "first_actor": parked_actor,
                 "last_actor": None,
                 "direction": self._direction,
@@ -570,13 +566,11 @@ class ParkedObstacleTwoWays(ParkedObstacle):
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self.parked_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
-            CarlaDataProvider.memory[
-                type(self).__name__]["obstacles"] = [
+            memory = get_memory_entry(type(self).__name__, id(self))
+            memory["obstacles"] = [
                     self.parked_actor
             ]
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            memory.update({
                 "first_actor": self.parked_actor,
                 "last_actor": None,
                 "direction": self._direction,
@@ -694,11 +688,11 @@ class HazardAtSideLane(BasicScenario):
         # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
-            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=bicycle_1, last_actor=bicycle_2, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-            CarlaDataProvider.memory[type(self).__name__]["bicycle_1"] = self.bicycle_1
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            scenario_id = id(self)
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=bicycle_1, last_actor=bicycle_2, scenario_id=scenario_id, trigger_location=config.trigger_points[0].location)) # added
+            memory = get_memory_entry(type(self).__name__, scenario_id)
+            memory["bicycle_1"] = self.bicycle_1
+            memory.update({
                 "first_actor": bicycle_1,
                 "last_actor": bicycle_2,
                 "changed_first_part_of_route": False,
@@ -795,9 +789,8 @@ class HazardAtSideLaneTwoWays(HazardAtSideLane):
         super()._initialize_actors(config, add_scenario_type=False)
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
         CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self.bicycle_1, last_actor=self.bicycle_2, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-        CarlaDataProvider.memory[
-            type(self).__name__
-        ].update({
+        memory = get_memory_entry(type(self).__name__, id(self))
+        memory.update({
             "first_actor": self.bicycle_1,
             "last_actor": self.bicycle_2,
             "changed_route": False,

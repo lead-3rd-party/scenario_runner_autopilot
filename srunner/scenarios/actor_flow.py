@@ -17,7 +17,7 @@ import carla
 
 from agents.navigation.local_planner import RoadOption
 
-from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider, get_memory_entry
 from srunner.scenariomanager.scenarioatomics.atomic_behaviors import ActorFlow, ScenarioTimeout, WaitForever
 from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest, ScenarioTimeoutTest
 from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (InTriggerDistanceToLocation,
@@ -101,10 +101,10 @@ class EnterActorFlow(BasicScenario):
         super()._initialize_actors(config)
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
-            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            scenario_id = id(self)
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=scenario_id, trigger_location=config.trigger_points[0].location)) # added
+            memory = get_memory_entry(type(self).__name__, scenario_id)
+            memory.update({
                 "source_wp": self._map.get_waypoint(self._start_actor_flow),
                 "sink_wp": self._map.get_waypoint(self._end_actor_flow),
                 "source_wps": get_same_dir_lanes(self._map.get_waypoint(self._start_actor_flow)),
@@ -191,10 +191,10 @@ class EnterActorFlowV2(EnterActorFlow):
         """
         super()._initialize_actors(config, add_scenario_type=False)
         from srunner.scenariomanager.carla_data_provider import ActiveScenario
-        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-        CarlaDataProvider.memory[
-            type(self).__name__
-        ].update({
+        scenario_id = id(self)
+        CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=scenario_id, trigger_location=config.trigger_points[0].location)) # added
+        memory = get_memory_entry(type(self).__name__, scenario_id)
+        memory.update({
             "source_wp": self._map.get_waypoint(self._start_actor_flow),
             "sink_wp": self._map.get_waypoint(self._end_actor_flow),
             "source_wps": get_same_dir_lanes(self._map.get_waypoint(self._start_actor_flow)),
@@ -620,10 +620,10 @@ class InterurbanActorFlow(BasicScenario):
         super()._initialize_actors(config)
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
-            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            scenario_id = id(self)
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=scenario_id, trigger_location=config.trigger_points[0].location)) # added
+            memory = get_memory_entry(type(self).__name__, scenario_id)
+            memory.update({
                 "source_wp": self._source_wp,
                 "sink_wp": self._sink_wp,
             })
@@ -831,10 +831,10 @@ class InterurbanAdvancedActorFlow(BasicScenario):
         self._remove_exits = exit_wps
         if add_scenario_type:
             from srunner.scenariomanager.carla_data_provider import ActiveScenario
-            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
-            CarlaDataProvider.memory[
-                type(self).__name__
-            ].update({
+            scenario_id = id(self)
+            CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, scenario_id=scenario_id, trigger_location=config.trigger_points[0].location)) # added
+            memory = get_memory_entry(type(self).__name__, scenario_id)
+            memory.update({
                 "source_wp_1": self._source_wp_1,
                 "sink_wp_1": self._sink_wp_1,
                 "source_wp_2": self._source_wp_2,
