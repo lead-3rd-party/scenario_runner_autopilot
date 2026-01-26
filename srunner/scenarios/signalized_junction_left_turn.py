@@ -219,7 +219,7 @@ class SignalizedJunctionLeftTurn(JunctionLeftTurn):
 
         root = py_trees.composites.Parallel(policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         end_condition = py_trees.composites.Sequence()
-        end_condition.add_child(WaitEndIntersection(self.ego_vehicles[0], pop_activate_senario=True))
+        end_condition.add_child(WaitEndIntersection(self.ego_vehicles[0], scenario_id=id(self)))
         end_condition.add_child(DriveDistance(self.ego_vehicles[0], self._end_distance))
         root.add_child(end_condition)
         root.add_child(ActorFlow(
@@ -287,7 +287,7 @@ class NonSignalizedJunctionLeftTurn(JunctionLeftTurn):
 
         root = py_trees.composites.Parallel(policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         end_condition = py_trees.composites.Sequence()
-        end_condition.add_child(WaitEndIntersection(self.ego_vehicles[0], pop_activate_senario=True))
+        end_condition.add_child(WaitEndIntersection(self.ego_vehicles[0], scenario_id=id(self)))
         end_condition.add_child(DriveDistance(self.ego_vehicles[0], self._end_distance))
         root.add_child(end_condition)
         root.add_child(ActorFlow(

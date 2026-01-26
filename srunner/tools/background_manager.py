@@ -10,9 +10,11 @@ removing its interference with other scenarios
 """
 import carla
 import py_trees
-from srunner.scenariomanager.scenarioatomics.atomic_behaviors import AtomicBehavior
-from srunner.scenariomanager.timer import GameTime
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
+from srunner.scenariomanager.scenarioatomics.atomic_behaviors import \
+    AtomicBehavior
+from srunner.scenariomanager.timer import GameTime
+
 
 class MakeRedLightLonger(AtomicBehavior):
     def __init__(self, world: carla.World, name="MakeRedLightLonger"):
@@ -190,11 +192,12 @@ class ClearScenarioType(AtomicBehavior):
         super().__init__("clear_scenario_from_carla_data_provider")
 
     def update(self):
-        if len(CarlaDataProvider.active_scenarios) > 0:
-            scenario_instance_id = CarlaDataProvider.active_scenarios[0].scenario_id
-            if scenario_instance_id == self.scenario_instance_id:
-                print("[ClearScenarioType] Cleaning active scenario: {} automatically after ending.".format(self.scenario_instance_id))
-                CarlaDataProvider.clean_current_active_scenario()
+        # Find and remove the scenario by ID (it may not be at position 0 due to distance-based sorting)
+        for scenario in CarlaDataProvider.active_scenarios:
+            if scenario.scenario_id == self.scenario_instance_id:
+                print("[ClearScenarioType] Removing scenario with ID {} automatically after ending.".format(self.scenario_instance_id))
+                CarlaDataProvider.remove_scenario(scenario)
+                break
         return py_trees.common.Status.SUCCESS
 
 class ChangeRoadBehavior(AtomicBehavior):
