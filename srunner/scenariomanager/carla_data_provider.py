@@ -159,6 +159,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     _grp = None
     _runtime_init_flag = False
     _lock = threading.Lock()
+    _route_xml_path = None  # Path to the current route XML file
 
     @staticmethod
     def current_active_scenario_type():
@@ -178,6 +179,26 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
             print(f"[CarlaDataProvider] Queue after cleaning {CarlaDataProvider.previous_active_scenario}: {CarlaDataProvider.active_scenarios}")
         else:
             raise ValueError("No active scenario to clean up")
+
+    @staticmethod
+    def set_route_xml_path(xml_path):
+        """
+        Set the path to the current route XML file.
+        
+        Args:
+            xml_path: Path to the XML file containing the route configuration
+        """
+        CarlaDataProvider._route_xml_path = xml_path
+
+    @staticmethod
+    def get_route_xml_path():
+        """
+        Get the path to the current route XML file.
+        
+        Returns:
+            Path to the XML file or None if not set
+        """
+        return CarlaDataProvider._route_xml_path
 
     @staticmethod
     def register_actor(actor, transform=None):
