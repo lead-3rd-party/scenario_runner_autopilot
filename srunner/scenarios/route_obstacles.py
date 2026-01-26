@@ -596,7 +596,6 @@ class ParkedObstacleTwoWays(ParkedObstacle):
                     "path_clear": False
                 }
             ))
-            })
 
 
 class HazardAtSideLane(BasicScenario):
