@@ -13,7 +13,8 @@ from __future__ import print_function
 
 import carla
 import py_trees
-from srunner.scenariomanager.carla_data_provider import CarlaDataProvider, get_memory_entry
+from srunner.scenariomanager.carla_data_provider import (CarlaDataProvider,
+                                                         get_memory_entry)
 from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (
     ActorFlow, ScenarioTimeout, TrafficLightFreezer)
 from srunner.scenariomanager.scenarioatomics.atomic_criteria import (

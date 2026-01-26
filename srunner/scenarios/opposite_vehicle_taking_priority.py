@@ -12,28 +12,25 @@ priority, e.g. by running a red traffic light.
 
 from __future__ import print_function
 
-import py_trees
 import carla
-
-from srunner.scenariomanager.carla_data_provider import CarlaDataProvider, get_memory_entry
-from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (ActorTransformSetter,
-                                                                      ActorDestroy,
-                                                                      TrafficLightFreezer,
-                                                                      ConstantVelocityAgentBehavior,
-                                                                      Idle)
-from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest
-from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (InTriggerDistanceToLocation,
-                                                                               InTimeToArrivalToLocation,
-                                                                               WaitEndIntersection)
+import py_trees
+from srunner.scenariomanager.carla_data_provider import (CarlaDataProvider,
+                                                         get_memory_entry)
+from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (
+    ActorDestroy, ActorTransformSetter, ConstantVelocityAgentBehavior, Idle,
+    TrafficLightFreezer)
+from srunner.scenariomanager.scenarioatomics.atomic_criteria import \
+    CollisionTest
+from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (
+    InTimeToArrivalToLocation, InTriggerDistanceToLocation,
+    WaitEndIntersection)
 from srunner.scenarios.basic_scenario import BasicScenario
-from srunner.tools.scenario_helper import (get_geometric_linear_intersection,
-                                           generate_target_waypoint,
-                                           get_junction_topology,
-                                           filter_junction_wp_direction,
-                                           get_closest_traffic_light)
-
 from srunner.tools.background_manager import HandleJunctionScenario
-
+from srunner.tools.scenario_helper import (filter_junction_wp_direction,
+                                           generate_target_waypoint,
+                                           get_closest_traffic_light,
+                                           get_geometric_linear_intersection,
+                                           get_junction_topology)
 
 
 class OppositeVehicleJunction(BasicScenario):

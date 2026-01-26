@@ -2942,7 +2942,7 @@ class ActorFlow(AtomicBehavior):
         self._actor_list.append(actor)
 
         if self.parent_scenario_type is not None:
-            CarlaDataProvider.memory[self.parent_scenario_type]["adversarial_actors"] = self._actor_list
+            CarlaDataProvider.get_current_scenario_memory()["adversarial_actors"] = self._actor_list
 
     def update(self):
         """Controls the created actors and creaes / removes other when needed"""

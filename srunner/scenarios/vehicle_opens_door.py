@@ -12,25 +12,23 @@ priority, e.g. by running a red traffic light.
 
 from __future__ import print_function
 
-import py_trees
 import carla
-
-from srunner.scenariomanager.carla_data_provider import CarlaDataProvider, get_memory_entry
-from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest, ScenarioTimeoutTest
-
-from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (ActorDestroy,
-                                                                      OpenVehicleDoor,
-                                                                      SwitchWrongDirectionTest,
-                                                                      ScenarioTimeout,
-                                                                      Idle,
-                                                                      OppositeActorFlow)
-from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (InTriggerDistanceToLocation,
-                                                                               InTimeToArrivalToLocation,
-                                                                               DriveDistance,
-                                                                               WaitUntilInFrontPosition)
+import py_trees
+from srunner.scenariomanager.carla_data_provider import (CarlaDataProvider,
+                                                         get_memory_entry)
+from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (
+    ActorDestroy, Idle, OpenVehicleDoor, OppositeActorFlow, ScenarioTimeout,
+    SwitchWrongDirectionTest)
+from srunner.scenariomanager.scenarioatomics.atomic_criteria import (
+    CollisionTest, ScenarioTimeoutTest)
+from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (
+    DriveDistance, InTimeToArrivalToLocation, InTriggerDistanceToLocation,
+    WaitUntilInFrontPosition)
 from srunner.scenarios.basic_scenario import BasicScenario
-
-from srunner.tools.background_manager import LeaveSpaceInFront, ChangeOppositeBehavior, StopBackVehicles, StartBackVehicles
+from srunner.tools.background_manager import (ChangeOppositeBehavior,
+                                              LeaveSpaceInFront,
+                                              StartBackVehicles,
+                                              StopBackVehicles)
 
 
 def get_value_parameter(config, name, p_type, default):
@@ -148,7 +146,8 @@ class VehicleOpensDoorTwoWays(BasicScenario):
 
         # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
         if add_scenario_type:
-            from srunner.scenariomanager.carla_data_provider import ActiveScenario
+            from srunner.scenariomanager.carla_data_provider import \
+                ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self._parked_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location)) # added
             memory = get_memory_entry(type(self).__name__, id(self))
             memory["obstacles"] = [

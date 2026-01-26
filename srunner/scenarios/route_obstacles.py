@@ -12,25 +12,23 @@ priority, e.g. by running a red traffic light.
 
 from __future__ import print_function
 
-import py_trees
 import carla
-
-from srunner.scenariomanager.carla_data_provider import CarlaDataProvider, get_memory_entry
-from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (ActorDestroy,
-                                                                      SwitchWrongDirectionTest,
-                                                                      BasicAgentBehavior,
-                                                                      ScenarioTimeout,
-                                                                      Idle, WaitForever,
-                                                                      HandBrakeVehicle,
-                                                                      OppositeActorFlow)
-from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest, ScenarioTimeoutTest
-from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (DriveDistance,
-                                                                               InTriggerDistanceToLocation,
-                                                                               InTriggerDistanceToVehicle,
-                                                                               WaitUntilInFront,
-                                                                               WaitUntilInFrontPosition)
+import py_trees
+from srunner.scenariomanager.carla_data_provider import (CarlaDataProvider,
+                                                         get_memory_entry)
+from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (
+    ActorDestroy, BasicAgentBehavior, HandBrakeVehicle, Idle,
+    OppositeActorFlow, ScenarioTimeout, SwitchWrongDirectionTest, WaitForever)
+from srunner.scenariomanager.scenarioatomics.atomic_criteria import (
+    CollisionTest, ScenarioTimeoutTest)
+from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (
+    DriveDistance, InTriggerDistanceToLocation, InTriggerDistanceToVehicle,
+    WaitUntilInFront, WaitUntilInFrontPosition)
 from srunner.scenarios.basic_scenario import BasicScenario
-from srunner.tools.background_manager import LeaveSpaceInFront, SetMaxSpeed, ChangeOppositeBehavior, ChangeRoadBehavior
+from srunner.tools.background_manager import (ChangeOppositeBehavior,
+                                              ChangeRoadBehavior,
+                                              LeaveSpaceInFront, SetMaxSpeed)
+
 
 def get_value_parameter(config, name, p_type, default):
     if name in config.other_parameters:
@@ -191,7 +189,8 @@ class Accident(BasicScenario):
 
         # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
         if add_scenario_type:
-            from srunner.scenariomanager.carla_data_provider import ActiveScenario
+            from srunner.scenariomanager.carla_data_provider import \
+                ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=police_car, last_actor=second_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
             memory = get_memory_entry(type(self).__name__, id(self))
             memory.update({
@@ -312,7 +311,8 @@ class AccidentTwoWays(Accident):
 
         # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
         if add_scenario_type:
-            from srunner.scenariomanager.carla_data_provider import ActiveScenario
+            from srunner.scenariomanager.carla_data_provider import \
+                ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self.police_car, last_actor=self.second_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
             memory = get_memory_entry(type(self).__name__, id(self))
             memory["obstacles"] = [
@@ -444,7 +444,8 @@ class ParkedObstacle(BasicScenario):
         self.parked_actor = parked_actor
 
         if add_scenario_type:
-            from srunner.scenariomanager.carla_data_provider import ActiveScenario
+            from srunner.scenariomanager.carla_data_provider import \
+                ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=parked_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
             memory = get_memory_entry(type(self).__name__, id(self))
             memory["obstacles"] = [
@@ -564,7 +565,8 @@ class ParkedObstacleTwoWays(ParkedObstacle):
         """
         super()._initialize_actors(config, add_scenario_type=False)
         if add_scenario_type:
-            from srunner.scenariomanager.carla_data_provider import ActiveScenario
+            from srunner.scenariomanager.carla_data_provider import \
+                ActiveScenario
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=self.parked_actor, metadata=self._direction, scenario_id=id(self), trigger_location=config.trigger_points[0].location))
             memory = get_memory_entry(type(self).__name__, id(self))
             memory["obstacles"] = [
@@ -687,7 +689,8 @@ class HazardAtSideLane(BasicScenario):
 
         # add actors that are relevant for the Expert to CarlaDataProvider.active_scenarios
         if add_scenario_type:
-            from srunner.scenariomanager.carla_data_provider import ActiveScenario
+            from srunner.scenariomanager.carla_data_provider import \
+                ActiveScenario
             scenario_id = id(self)
             CarlaDataProvider.active_scenarios.append(ActiveScenario(type(self).__name__, first_actor=bicycle_1, last_actor=bicycle_2, scenario_id=scenario_id, trigger_location=config.trigger_points[0].location)) # added
             memory = get_memory_entry(type(self).__name__, scenario_id)
